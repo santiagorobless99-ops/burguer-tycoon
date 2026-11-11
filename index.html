@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Burger Tycoon Tucumán: de la esquina al imperio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{--ink:#2b1d14;--paper:#fbeccb;--red:#d7263d;--gold:#ffd23f;--green:#2e9e44;--blue:#3b82c4}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:'VT323',monospace;font-size:20px;line-height:1.1;color:var(--ink);
+ background-color:#2e2140;
+ background-image:linear-gradient(45deg,#36284b 25%,transparent 25%,transparent 75%,#36284b 75%),linear-gradient(45deg,#36284b 25%,transparent 25%,transparent 75%,#36284b 75%);
+ background-size:32px 32px;background-position:0 0,16px 16px;min-height:100vh;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.pf{font-family:'Press Start 2P',monospace}
+.spr{image-rendering:pixelated;image-rendering:crisp-edges;display:inline-block;vertical-align:middle;height:auto}
+#app{max-width:1000px;margin:0 auto;padding-bottom:90px}
+#hud{position:sticky;top:0;z-index:20;background:var(--ink);color:var(--gold);padding:8px 10px 6px;border-bottom:4px solid #000;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+#hud .row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#h-name{font-family:'Press Start 2P';font-size:9px;color:#fff;max-width:40%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#h-money{font-family:'Press Start 2P';font-size:13px;color:var(--gold);margin-left:auto}
+#h-money.neg{color:#ff6b6b}
+.hbtn{font-family:'Press Start 2P';font-size:9px;background:#4a3a2e;color:#fff;border:2px solid #000;box-shadow:0 3px 0 #000;padding:6px 7px;cursor:pointer}
+.hbtn:active{transform:translateY(2px);box-shadow:0 1px 0 #000}
+.hbtn.on{background:var(--red)}
+.hstat{font-size:18px;color:#f4e4c1}
+.stars{color:var(--gold);letter-spacing:1px}
+.stars .off{color:#6b5a48}
+.daybar{height:6px;background:#4a3a2e;margin-top:5px;border:2px solid #000}
+.daybar i{display:block;height:100%;background:var(--gold);width:0}
+#banner{margin:8px 10px 0}
+.event{background:var(--gold);border:4px solid var(--ink);padding:6px 8px;box-shadow:0 4px 0 rgba(0,0,0,.35);animation:blink .5s steps(2) 3}
+.event b{font-family:'Press Start 2P';font-size:10px;display:block;margin-bottom:3px;line-height:1.4}
+.event .tbar{height:6px;background:#fff6;border:2px solid var(--ink);margin-top:4px}
+.event .tbar i{display:block;height:100%;background:var(--red)}
+@keyframes blink{50%{filter:brightness(1.3)}}
+.panel{background:var(--paper);border:4px solid var(--ink);margin:10px;padding:10px;box-shadow:0 4px 0 rgba(0,0,0,.35),inset -4px -4px 0 #e2c995,inset 4px 4px 0 #fff8e6;position:relative}
+.panel h2{font-family:'Press Start 2P';font-size:11px;background:var(--red);color:#fff;margin:-10px -10px 10px;padding:8px 10px;border-bottom:4px solid var(--ink);text-shadow:2px 2px 0 var(--ink);display:flex;justify-content:space-between;align-items:center;gap:6px;line-height:1.4}
+.panel h2 small{font-size:9px;color:var(--gold)}
+.panel h3{font-family:'Press Start 2P';font-size:10px;margin:14px 0 8px;color:var(--red);line-height:1.4}
+.hint{background:#fff;border-style:dashed}
+.note{font-size:18px;color:#6b4a2e;margin-top:6px}
+.grid2{display:grid;grid-template-columns:1fr}
+@media(min-width:860px){.grid2{grid-template-columns:1fr 1fr}.grid2 .panel{margin-right:5px}.grid2 .panel+.panel{margin-left:5px;margin-right:10px}}
+.v3d{position:relative;margin:10px;height:40vh;min-height:230px;max-height:460px;border:4px solid var(--ink);background:#8fd3ff;box-shadow:0 4px 0 rgba(0,0,0,.35);overflow:hidden}
+.v3d.big{height:52vh;max-height:560px}
+.v3d canvas{display:block;width:100%;height:100%;touch-action:none;image-rendering:pixelated;cursor:grab}
+.v3d .ctl{position:absolute;right:6px;bottom:6px;display:flex;gap:4px;z-index:2}
+.v3d .ctl .hbtn{font-size:10px;padding:6px 8px}
+.v3d .lbl{position:absolute;left:6px;top:6px;font-family:'Press Start 2P';font-size:7px;color:#fff;text-shadow:1px 1px 0 #000;z-index:2;pointer-events:none;line-height:1.5}
+.v3d .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:20px;background:var(--paper)}
+.queue{display:flex;flex-wrap:wrap;gap:8px;min-height:150px;align-content:flex-start}
+.empty{color:#8a6a4a;font-size:20px;padding:30px 0;width:100%;text-align:center}
+.cust{width:96px;background:#fff;border:3px solid var(--ink);padding:4px;text-align:center;cursor:pointer;animation:walkin .35s steps(4);box-shadow:0 3px 0 rgba(0,0,0,.25);touch-action:manipulation;position:relative}
+.cust.del{background:#fff4dc;border-style:dashed}
+.cust.ready{border-color:var(--green);background:#e8ffe9;animation:walkin .35s steps(4),pulse .8s steps(2) infinite}
+.cust.shake{animation:shake .3s steps(3)}
+@keyframes walkin{from{transform:translateX(-24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes pulse{50%{box-shadow:0 3px 0 var(--green),0 0 0 3px var(--green)}}
+@keyframes shake{33%{transform:translateX(-4px)}66%{transform:translateX(4px)}}
+.cname{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bub{font-size:14px;line-height:1;color:#6b4a2e;min-height:28px;margin-top:2px}
+.corder{min-height:24px;display:flex;flex-wrap:wrap;justify-content:center;gap:1px;margin:2px 0}
+.pbar,.slot{height:8px;border:2px solid var(--ink);background:#ddd}
+.pbar i,.slot i{display:block;height:100%;width:0;background:var(--green)}
+.stations{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.station{background:#fff;border:3px solid var(--ink);padding:6px;text-align:center;cursor:pointer;box-shadow:0 4px 0 var(--ink);touch-action:manipulation}
+.station:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.station.off{background:#999;filter:grayscale(1)}
+.station.locked{opacity:.45;filter:grayscale(1);cursor:default;box-shadow:none}
+.sname{font-family:'Press Start 2P';font-size:8px;margin:4px 0;min-height:16px;line-height:1.4}
+.sstock{font-size:18px}
+.slots{display:flex;gap:3px;margin:4px 0}
+.slots .slot{flex:1}
+.slots .slot i{background:#e8a33d}
+.scost{font-size:15px;color:#8a6a4a}
+.btn{font-family:'Press Start 2P';font-size:9px;background:var(--red);color:#fff;border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink);padding:8px 8px;cursor:pointer;text-shadow:1px 1px 0 var(--ink);line-height:1.4;touch-action:manipulation}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn.g{background:var(--green)}.btn.b{background:var(--blue)}.btn.y{background:var(--gold);color:var(--ink);text-shadow:none}
+.btn.dis{background:#9a8f85}
+.btn.big{font-size:11px;padding:12px 14px;width:100%;margin-top:10px}
+.btn.sm{font-size:8px;padding:6px 6px}
+.item{display:flex;gap:10px;align-items:center;background:#fff;border:3px solid var(--ink);padding:8px;margin-bottom:8px}
+.item.bigitem{background:#fff8e0;border-width:4px}
+.item .info{flex:1;min-width:0}
+.item .t{font-family:'Press Start 2P';font-size:9px;margin-bottom:4px;line-height:1.4}
+.item .d{font-size:17px;color:#6b4a2e}
+.pips{margin-top:3px}
+.pips span{display:inline-block;width:12px;height:8px;border:2px solid var(--ink);margin-right:2px;background:#ddd}
+.pips span.on{background:var(--gold)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.chip{border:3px solid var(--ink);padding:5px 8px;background:#fff;cursor:pointer;font-size:17px;display:flex;align-items:center;gap:5px}
+.chip.on{background:var(--gold);box-shadow:0 0 0 2px var(--red)}
+.chip .sw{width:16px;height:16px;border:2px solid var(--ink);display:inline-block}
+.chip .sw2{width:8px;height:16px;display:inline-block}
+.prow{background:#fff;border:3px solid var(--ink);padding:8px;margin-bottom:8px}
+.prow .top{display:flex;align-items:center;gap:8px}
+.prow .nums{font-size:18px;flex:1}
+.prow .btns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.prow .btns .btn{flex:1}
+.cheap{color:var(--blue)}.fair{color:var(--green)}.exp{color:var(--red)}
+.city{background:#fff;border:3px solid var(--ink);padding:8px;margin-bottom:10px}
+.city .head{display:flex;gap:10px;align-items:center}
+.city .head .nm{font-family:'Press Start 2P';font-size:10px;line-height:1.4}
+.city .stats{font-size:18px;margin:6px 0}
+.city .ctr{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.city.locked{opacity:.55}
+.badge{display:inline-block;font-family:'Press Start 2P';font-size:7px;padding:3px 4px;border:2px solid var(--ink);background:var(--gold);margin-left:4px;vertical-align:middle;line-height:1.3}
+.badge.r{background:var(--red);color:#fff}.badge.gr{background:var(--green);color:#fff}
+.kv{display:flex;justify-content:space-between;border-bottom:2px dotted #d6bf8f;padding:3px 0;gap:8px}
+.log{font-size:17px;max-height:220px;overflow:auto;background:#fff;border:3px solid var(--ink);padding:6px}
+.log div{border-bottom:1px dashed #ddd;padding:2px 0}
+.ach{display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:2px dotted #d6bf8f;font-size:18px}
+.ach .ic{width:18px;height:18px;border:3px solid var(--ink);background:#ddd;flex:none}
+.ach.ok .ic{background:var(--gold)}
+.ach:not(.ok){color:#8a7a6a}
+#tabs{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;justify-content:center;background:var(--ink);border-top:4px solid #000;padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
+#tabs .tb{flex:1;max-width:130px;background:transparent;border:3px solid transparent;color:#f4e4c1;font-family:'Press Start 2P';font-size:7px;padding:5px 1px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+#tabs .tb.on{background:var(--red);border-color:#000;color:#fff}
+#tabs .tb img{height:20px!important;width:auto!important}
+#toasts{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:40;width:min(92vw,420px);pointer-events:none}
+.toast{background:#fff;border:3px solid var(--ink);padding:6px 8px;margin-top:6px;font-size:18px;box-shadow:0 3px 0 rgba(0,0,0,.35);transition:opacity .4s}
+.toast.ok{background:#e8ffe9}.toast.warn{background:#ffe8e0}.toast.ev{background:var(--gold)}
+.toast.out{opacity:0}
+.float{position:absolute;z-index:45;transform:translateX(-50%);font-family:'Press Start 2P';font-size:11px;color:var(--green);text-shadow:2px 2px 0 #fff,-1px -1px 0 #fff;pointer-events:none;animation:rise 1.1s steps(11) forwards;white-space:nowrap}
+.float.bad{color:var(--red)}.float.say{color:var(--ink);font-size:9px}
+@keyframes rise{to{transform:translate(-50%,-50px);opacity:0}}
+#modal{position:fixed;inset:0;z-index:60;background:rgba(20,12,30,.82);display:flex;align-items:center;justify-content:center;padding:14px}
+#modal.hidden{display:none}
+.mbox{background:var(--paper);border:4px solid var(--ink);box-shadow:0 6px 0 #000;max-width:460px;width:100%;padding:16px;text-align:center;max-height:92vh;overflow:auto}
+.mbox .title{font-family:'Press Start 2P';font-size:22px;color:var(--red);text-shadow:3px 3px 0 var(--ink);line-height:1.4;margin-bottom:6px}
+.mbox .sub{font-family:'Press Start 2P';font-size:9px;margin-bottom:12px;line-height:1.5}
+.mbox p,.mbox li{text-align:left}
+.mbox input,.mbox textarea,.panel input{width:100%;font-family:'VT323';font-size:22px;padding:6px;border:3px solid var(--ink);background:#fff;margin-top:4px}
+.mbox textarea{height:90px;font-size:14px;word-break:break-all}
+.mbox label{display:block;text-align:left;font-family:'Press Start 2P';font-size:8px;margin-top:8px}
+.goal{font-size:19px;padding:3px 0}
+.goal.ok{color:var(--green)}
+</style>
+</head>
+<body>
+<div id="app">
+ <header id="hud">
+  <div class="row"><span id="h-name"></span><span id="h-money"></span><button class="hbtn" id="h-speed" data-act="speed">x1</button><button class="hbtn" data-act="pause">II</button></div>
+  <div class="row" style="margin-top:4px">
+   <span class="hstat stars" id="h-rep"></span>
+   <span class="hstat" id="h-day"></span>
+   <span class="hstat" id="h-inf"></span>
+   <span class="hstat" id="h-extra"></span>
+  </div>
+  <div class="daybar"><i id="h-dayb"></i></div>
+ </header>
+ <div id="banner"></div>
+ <main id="view"></main>
+</div>
+<nav id="tabs"></nav>
+<div id="toasts"></div>
+<div id="modal" class="hidden"></div>
+<script>
+'use strict';
+/* ================= BÁSICOS ================= */
+const DAY_SEC = 30, SAVE_KEY = 'burgertycoon_v1', STOCK_MAX = 6, VERSION = 2;
+const $ = s => document.querySelector(s);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const rnd = a => a[Math.floor(Math.random() * a.length)];
+const roundP = x => Math.max(100, Math.round(x / 100) * 100);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+/* ---------- Pixel art 2D (interfaz) ---------- */
+const PAL = {k:'#2b1d14',b:'#e8a33d',B:'#b86e1f',s:'#fff3c4',l:'#5cb85c',c:'#ffcc33',m:'#6b3a1e',r:'#e04a3a',y:'#ffd23f',Y:'#e0a800',R:'#d7263d',w:'#ffffff',g:'#a8a8a8',G:'#4a4a4a',p:'#b5523a',P:'#7a2f1f',f:'#f2c19d',h:'#4a2c1a',o:'#d98a2b',n:'#f0c27b',e:'#2f6b24',J:'#3b5ba5',T:'#e04a3a'};
+const SPR = {
+ burger:['............','...kkkkkk...','..kbbsbbbk..','.kbsbbbbsbk.','.kbbbbsbbbk.','.kBBBBBBBBk.','kllllllllllk','.kcccccccck.','.kmmmmmmmmk.','.kmmmmmmmmk.','.kBBBBBBBBk.','..kkkkkkkk..'],
+ fries:['............','...y.y.y....','..yy.yYy.y..','..yYyyyyyy..','..yyyYyyYy..','.kRRRRRRRRk.','.kRwRRRRwRk.','.kRRwwwwRRk.','..kRRRRRRk..','..kRRRRRRk..','..kRRRRRRk..','...kkkkkk...'],
+ empanada:['............','............','............','.....kkk....','...kkbbbkk..','..kbbbbbbbk.','.kbbsbbbsbbk','.kbbbbbbbbbk','.kBkBkBkBkBk','..kkkkkkkkk.','............','............'],
+ chori:['............','............','............','...kkkkkk...','..knnnnnnk..','kkPppppppPkk','kPpppepppepk','.kkPPPPPPkk.','..kBBBBBBk..','..knnnnnnk..','...kkkkkk...','............'],
+ lomito:['............','..kkkkkkkk..','.knnsnnnsnk.','knnnnnnnnnnk','kllllllllllk','kwwwccwwwwwk','kmmmmmmmmmmk','krrrrrrrrrrk','kBBBBBBBBBBk','.kkkkkkkkkk.','............','............'],
+ mila:['............','..kkkkkkkk..','.knnnnnnnnk.','knnnnnnnnnnk','koooooooooYk','kllllllllllk','krrrrrrrrrrk','kwwwccwwwwwk','kBBBBBBBBBBk','.kkkkkkkkkk.','............','............'],
+ achilata:['............','....kkkk....','...krrrrk...','..krrwrrrk..','..krrrrrrk..','..kkkkkkkk..','..kwwwwwwk..','...kwwwwk...','...kwRRwk...','....kwwk....','....kkkk....','............'],
+ moto:['.......kk...','......kRk...','.kkk..kRk...','kooRkkRRRk..','kooRRRRRRRk.','.kkkRRRRRkk.','.kGk....kGk.','kGGGk..kGGGk','.kGk....kGk.'],
+ person:['...hhhh...','..hhhhhh..','..hffffh..','..fkffkf..','..ffffff..','...frrf...','....ff....','..TTTTTT..','.TTTTTTTT.','.fTTTTTTf.','.fTTTTTTf.','..JJJJJJ..','..JJ..JJ..','..kk..kk..'],
+ chef:['..wwwwww..','.wwwwwwww.','..wwwwww..','..gggggg..','..fkffkf..','..ffffff..','...ffff...','..wwwwww..','.wwwRwwww.','.fwwwwwwf.','.fwwwwwwf.','..GGGGGG..','..GG..GG..','..kk..kk..'],
+ store:['RwRwRwRwRwRwRwRw','RwRwRwRwRwRwRwRw','.kkkkkkkkkkkkkk.','.kggggggggggggk.','.kgccccgkkkkggk.','.kgccccgkwwkggk.','.kgccccgkwwkggk.','.kggggggkwwkggk.','.kkkkkkkkkkkkkk.'],
+ coin:['..kkkk..','.kcccck.','kccwccck','kcwcccck','kccccYck','kcccYYck','.kcYYck.','..kkkk..'],
+ bill:['kkkkkkkkkk','keeeeeeeek','kelllwllek','kellwwwlek','kelllwllek','keeeeeeeek','kkkkkkkkkk'],
+ arrow:['...kk...','..kllk..','.kllllk.','kllllllk','kkkllkkk','..kllk..','..kllk..','..kkkk..'],
+ tower:['.kkkkkk.','.kgcgck.','.kggggk.','.kgcgck.','.kggggk.','.kgcgck.','.kggggk.','.kgkkgk.','kkkkkkkk'],
+ brush:['......kk','.....kRk','....kRk.','...kRk..','..kkk...','.kbbk...','kbbk....','kkk.....']
+};
+const sprCache = {};
+function spr(name, over) {
+ const key = name + (over ? JSON.stringify(over) : '');
+ if (sprCache[key]) return sprCache[key];
+ const rows = SPR[name], h = rows.length, w = rows[0].length;
+ const c = document.createElement('canvas'); c.width = w; c.height = h;
+ const x = c.getContext('2d');
+ for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+  const ch = rows[j][i]; if (ch === '.') continue;
+  x.fillStyle = (over && over[ch]) || PAL[ch] || '#f0f'; x.fillRect(i, j, 1, 1);
+ }
+ return sprCache[key] = c.toDataURL();
+}
+const img = (name, size, over) => `<img class="spr" src="${spr(name, over)}" style="width:${size}px" alt="">`;
+
+const SHIRTS = ['#e04a3a','#3b82c4','#5cb85c','#9b59b6','#f39c12','#1abc9c','#e84393','#34495e','#75aadb','#c0392b'];
+const HAIRS = ['#4a2c1a','#1a1a1a','#c98b3a','#7a4a2a','#d9d9d9','#a33a2a'];
+const SKINS = ['#f2c19d','#d9a37a','#b07a52','#7a4a2e'];
+const PANTS = ['#3b5ba5','#2b2b3a','#5a4a3a','#3a5a3a','#6a6a7a'];
+const NAMES = ['El Chango','La Changuita','Ñaño','El Tuqui','Doña Chicha','Coco','Pochi','El Tano','Mirta','Juanjo','Rulo','Pato','Moni','Fede','Lucho','Belu','El Colo','Tincho','Cami','Nacho','Doña Rosa','Flaco','Vale','Gaby','Cholo','La Negra','El Turco','Chiche','Pipo','Nati','Kevin','Yami'];
+const SAYS = ['¡Qué hacé, chango!','Dale que tengo hambre','Mirá vo\' qué rico','Sí, bah... apurate','¿Tené\' achilata?','Uh, qué fila, ñaño','Ni a palos me voy','Ponele mucho limón','Vengo del centro','¡Changuito, atendeme!','Me dijeron que es lo más','Hoy juega el Decano'];
+const SAYS_MILA = ['¿Cómo lo querí\'? ¡Completo!','¡Con todo, chango!','Completo y con ají','La mila más grande, ¿no?'];
+
+/* ---------- Datos de juego ---------- */
+const PRODUCTS = {
+ burger:{name:'Hamburguesa',ref:9000,time:4,unlock:0,w:5,spr:'burger',col:'#b86e1f',col2:'#e8a33d'},
+ papas:{name:'Papas fritas',ref:5000,time:3,unlock:40000,w:4,spr:'fries',col:'#d7263d',col2:'#ffd23f'},
+ chori:{name:'Choripán',ref:7000,time:5,unlock:90000,w:3,spr:'chori',col:'#f0c27b',col2:'#a0412d'},
+ empanada:{name:'Empanadas tucumanas',ref:12000,time:6,unlock:140000,w:4,spr:'empanada',col:'#e8a33d',col2:'#b86e1f'},
+ lomito:{name:'Lomito completo',ref:16000,time:7,unlock:230000,w:3,spr:'lomito',col:'#f0c27b',col2:'#6b3a1e'},
+ mila:{name:'Sánguche de mila tucumano',ref:15000,time:6,unlock:450000,w:5,spr:'mila',col:'#f0c27b',col2:'#d98a2b'}
+};
+const PKEYS = Object.keys(PRODUCTS);
+const UPG = {
+ speed:{name:'Plancha industrial',desc:'Cocinás 20% más rápido',costs:[50000,160000,450000]},
+ slots:{name:'Más hornallas',desc:'+1 producto en simultáneo por estación',costs:[80000,300000]},
+ sign:{name:'Publicidad en la radio',desc:'+30% de clientes',costs:[45000,180000,520000]},
+ salon:{name:'Ampliar el salón',desc:'+2 lugares en la fila (sube el alquiler)',costs:[120000,400000]},
+ supplier:{name:'Proveedor del Mercado de Abasto',desc:'Insumos 10% más baratos',costs:[150000,500000]}
+};
+const STAFF = {
+ parrillero:{name:'Parrillero',desc:'Cocina solo, según lo que pide la fila',costs:[70000,220000,600000],wage:16000},
+ cajero:{name:'Cajero',desc:'Entrega solo los pedidos listos',costs:[90000,260000,700000],wage:14000},
+ contador:{name:'Contador',desc:'Remarca todos los precios al cierre de cada día',costs:[250000],wage:25000}
+};
+const FLOORS = {cemento:{name:'Cemento alisado',cost:0,deco:0},damero:{name:'Damero blanco y negro',cost:80000,deco:2},calcareo:{name:'Mosaico calcáreo',cost:150000,deco:3},madera:{name:'Pinotea lustrada',cost:220000,deco:4}};
+const SIGNS = {basico:{name:'Cartel de chapa',cost:0,deco:0},neon:{name:'Cartel de neón',cost:180000,deco:3},marquesina:{name:'Marquesina con lamparitas',cost:420000,deco:5}};
+const WALLS = {crema:'#efe2c4',celeste:'#a9d6ee',lapacho:'#efb3cc',verde:'#b8dcb0',terracota:'#d9906a',blanco:'#f4f4f4',amarillo:'#f3d77a'};
+const AWNINGS = {rojo:['#d7263d','#ffffff'],celeste:['#75aadb','#ffffff'],verde:['#2e9e44','#ffffff'],amarillo:['#ffd23f','#2b1d14'],violeta:['#7b4fb3','#ffffff'],naranja:['#ff8c1a','#ffffff']};
+const UNIFORMS = {blanco:'#f4f4f4',rojo:'#d7263d',negro:'#333333',celeste:'#75aadb',verde:'#2e9e44',naranja:'#ff8c1a'};
+const ITEMS = {
+ naranjo:{name:'Naranjo en la vereda',desc:'Como en toda calle tucumana',cost:40000,deco:1},
+ lapacho:{name:'Lapacho rosado',desc:'Florece todo el año frente al local',cost:90000,deco:2},
+ mesas:{name:'Mesa extra',desc:'+2 lugares para sentarse después de comer',cost:70000,deco:1},
+ tele:{name:'Tele para ver el clásico',desc:'Con partido, la gente espera mucho más',cost:120000,deco:2},
+ rocola:{name:'Rocola con cumbia',desc:'Pone ambiente en el salón',cost:150000,deco:2},
+ mural:{name:'Mural del Cerro San Javier',desc:'Arte local en la pared del fondo',cost:200000,deco:3},
+ aire:{name:'Aire acondicionado',desc:'La ola de calor ya no apura a nadie',cost:250000,deco:1},
+ cart:{name:'Carrito de achilata',big:true,desc:'Le vende achilata a la gente que pasa. Con calor, se lo pelean',cost:350000,deco:2},
+ moto:{name:'Moto de delivery',big:true,desc:'Entran pedidos por delivery que no ocupan lugar en la fila',cost:600000,deco:1},
+ terraza:{name:'Terraza en la vereda',big:true,desc:'+2 lugares en la fila y mesas afuera',cost:900000,deco:3},
+ estatua:{name:'Réplica de la Libertad',big:true,desc:'Homenaje a Lola Mora en tu terreno. Pura chapa',cost:1200000,deco:6},
+ piso2:{name:'Segundo piso',big:true,desc:'El local crece: +15% de clientes y +10% de paciencia',cost:2500000,deco:4}
+};
+const EVENTS = [
+ {id:'tiktok',title:'¡Un tiktoker te recomendó!',desc:'Llueven clientes',dur:30,spawnMul:2.6,w:2},
+ {id:'clasico',title:'Clásico tucumano',desc:'Todos quieren comer antes del partido',dur:35,spawnMul:2,patMul:1.15,w:2},
+ {id:'zafra',title:'Arrancó la zafra',desc:'Mucha gente trabajando y con hambre',dur:40,spawnMul:1.5,w:2},
+ {id:'julio',title:'9 de Julio en la Casa Histórica',desc:'La ciudad se llena de turistas',dur:35,spawnMul:2.2,w:1},
+ {id:'calor',title:'Ola de calor tucumana',desc:'La gente está impaciente y quiere achilata',dur:40,patMul:0.75,w:2},
+ {id:'luz',title:'Corte de luz',desc:'La cocina no funciona',dur:12,noCook:true,w:2},
+ {id:'paro',title:'Paro de colectivos',desc:'Viene poca gente',dur:30,spawnMul:0.4,w:1.5},
+ {id:'simoca',title:'Feria de Simoca',desc:'Medio Tucumán se fue a Simoca: viene menos gente',dur:30,spawnMul:0.55,w:1},
+ {id:'quema',title:'Humo de la quema de caña',desc:'Nadie quiere salir de la casa',dur:25,spawnMul:0.65,w:1},
+ {id:'lluvia',title:'Tormenta de verano',desc:'Menos clientes y más impacientes',dur:30,spawnMul:0.6,patMul:0.85,w:1.5},
+ {id:'carne',title:'Aumentó la carne',desc:'Insumos 30% más caros',dur:40,costMul:1.3,w:2},
+ {id:'deval',title:'¡Devaluación!',desc:'',dur:8,w:1},
+ {id:'bromato',title:'Inspección de bromatología',desc:'',dur:8,w:1.5}
+];
+const EVMAP = Object.fromEntries(EVENTS.map(e => [e.id, e]));
+const CITIES = [
+ {id:'yb',name:'Yerba Buena',prov:'Tucumán',cost:3e6,rent:40000,market:75,wealth:1.15,log:0},
+ {id:'tv',name:'Tafí Viejo',prov:'Tucumán',cost:2.2e6,rent:28000,market:55,wealth:0.95,log:0},
+ {id:'fam',name:'Famaillá',prov:'Tucumán',cost:2e6,rent:25000,market:50,wealth:0.9,log:0,note:'Capital de la empanada: +40% de demanda si vendés empanadas'},
+ {id:'con',name:'Concepción',prov:'Tucumán',cost:2.6e6,rent:30000,market:60,wealth:0.95,log:0},
+ {id:'tdv',name:'Tafí del Valle',prov:'Tucumán',cost:4e6,rent:50000,market:65,wealth:1.25,log:0,note:'Turística: la gente paga más'},
+ {id:'sim',name:'Simoca',prov:'Tucumán',cost:1.5e6,rent:18000,market:40,wealth:0.85,log:0,note:'Cuando hay feria, explota de gente'},
+ {id:'sde',name:'Santiago del Estero',prov:'Santiago',cost:2.8e6,rent:32000,market:65,wealth:0.9,log:1},
+ {id:'sal',name:'Salta',prov:'Salta',cost:4e6,rent:45000,market:85,wealth:1,log:1},
+ {id:'cat',name:'Catamarca',prov:'Catamarca',cost:3e6,rent:35000,market:60,wealth:0.95,log:1},
+ {id:'juj',name:'San Salvador de Jujuy',prov:'Jujuy',cost:3.4e6,rent:38000,market:65,wealth:0.95,log:1},
+ {id:'cba',name:'Córdoba',prov:'Córdoba',cost:8e6,rent:80000,market:140,wealth:1.05,log:2},
+ {id:'ros',name:'Rosario',prov:'Santa Fe',cost:9e6,rent:90000,market:150,wealth:1.05,log:2},
+ {id:'mza',name:'Mendoza',prov:'Mendoza',cost:12e6,rent:100000,market:150,wealth:1.1,log:2},
+ {id:'pal',name:'Palermo',prov:'CABA',cost:30e6,rent:300000,market:260,wealth:1.35,log:3},
+ {id:'mdp',name:'Mar del Plata',prov:'Buenos Aires',cost:14e6,rent:120000,market:170,wealth:1.1,log:3},
+ {id:'brc',name:'Bariloche',prov:'Río Negro',cost:25e6,rent:220000,market:160,wealth:1.4,log:3}
+];
+const CITY = Object.fromEntries(CITIES.map(c => [c.id, c]));
+const CORP = {
+ compras:{name:'Central de compras',desc:'Insumos 8% más baratos en toda la cadena y más calidad',costs:[5e6,15e6,40e6]},
+ marca:{name:'Campaña nacional',desc:'+20% de demanda en todas las sucursales',costs:[8e6,25e6,70e6]},
+ logistica:{name:'Logística y depósitos',desc:'Habilita provincias más lejanas',costs:[4e6,15e6,45e6]},
+ escuela:{name:'Escuela de encargados',desc:'Encargados 30% más baratos, más calidad y habilita encargados estrella',costs:[10e6]},
+ contador:{name:'Estudio contable',desc:'Actualiza la lista de precios de la cadena todos los días',costs:[18e6]}
+};
+const POLICY = ['Popular','Normal','Premium'], POLMUL = [0.85, 1, 1.3];
+const IPO_COST = 250e6, IPO_BRANCHES = 10;
+const ACH = [
+ {id:'first',name:'Primer cliente',desc:'Atendé a tu primer cliente',cond:() => S.stats.served >= 1,rew:5000},
+ {id:'c100',name:'Cien changos felices',desc:'Atendé 100 clientes',cond:() => S.stats.served >= 100,rew:50000},
+ {id:'c1000',name:'Institución tucumana',desc:'Atendé 1.000 clientes',cond:() => S.stats.served >= 1000,rew:400000},
+ {id:'rep5',name:'Cinco estrellas',desc:'Llegá a 5★ de reputación',cond:() => S.rep >= 4.95,rew:100000},
+ {id:'menu',name:'Carta completa',desc:'Desbloqueá todo el menú',cond:() => PKEYS.every(k => S.p[k].unlocked),rew:150000},
+ {id:'mila',name:'¿Cómo lo querí\'?',desc:'Vendé 50 sánguches de mila',cond:() => S.stats.mila >= 50,rew:100000},
+ {id:'achi',name:'Achilatero',desc:'Vendé 100 achilatas',cond:() => S.stats.achilata >= 100,rew:80000},
+ {id:'usd',name:'Debajo del colchón',desc:'Juntá US$ 5.000',cond:() => S.usd >= 5000,rew:0},
+ {id:'deval',name:'Sobreviviente',desc:'Pasá una devaluación',cond:() => S.stats.devals >= 1,rew:30000},
+ {id:'deco',name:'El más lindo de la cuadra',desc:'Llegá a 20 puntos de decoración',cond:() => decoPts() >= 20,rew:200000},
+ {id:'br1',name:'Primera sucursal',desc:'Abrí una sucursal',cond:() => Object.keys(S.br).length >= 1,rew:500000},
+ {id:'tuc',name:'Dueño del Jardín',desc:'Abrí en todas las ciudades de Tucumán',cond:() => CITIES.filter(c => c.prov === 'Tucumán').every(c => S.br[c.id]),rew:3e6},
+ {id:'br10',name:'Cadena nacional',desc:'Tené 10 sucursales',cond:() => Object.keys(S.br).length >= 10,rew:5e6},
+ {id:'ipo',name:'Timbreaste',desc:'Salí a la bolsa',cond:() => S.won,rew:0}
+];
+
+/* ---------- Estado ---------- */
+let S = null, tab = 'cocina', paused = false;
+function newState(name) {
+ const p = {};
+ PKEYS.forEach(k => p[k] = {unlocked:k === 'burger', price:PRODUCTS[k].ref, ratio:1, stock:0, cooking:[]});
+ return {v:VERSION,name:name || 'La Esquina',money:60000,usd:0,rep:3,I:1,inf:0.05,t:0,day:1,dayT:0,earned:0,phase:1,p,
+  upg:{speed:0,slots:0,sign:0,salon:0,supplier:0},staff:{parrillero:0,cajero:0,contador:0},
+  q:[],nid:1,spawnT:2,delT:10,ev:null,evT:70,ai:{p:0,c:0},
+  stats:{served:0,lost:0,expensive:0,full:0,mila:0,achilata:0,devals:0,delivery:0},
+  dayStats:{rev:0,cost:0},br:{},corp:{compras:0,marca:0,logistica:0,escuela:0,contador:0},list:1,blue:0.03,
+  cos:{floor:'cemento',sign:'basico',wall:'crema',awning:'rojo',uniform:'blanco',floors:{cemento:1},signs:{basico:1},items:{}},
+  ach:{},log:[],muted:false,won:false,speed:1,gfx:'pixel'};
+}
+function deepMerge(a, b) {
+ for (const k in b) {
+  if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) deepMerge(a[k], b[k]);
+  else a[k] = b[k];
+ }
+ return a;
+}
+function sanitize(st) {
+ PKEYS.forEach(k => { const p = st.p[k]; if (!Array.isArray(p.cooking)) p.cooking = []; if (!(p.price > 0)) p.price = PRODUCTS[k].ref; if (!(p.ratio > 0)) p.ratio = 1; });
+ for (const k in st.p) if (!PRODUCTS[k]) delete st.p[k];
+ st.q = (st.q || []).filter(c => c && Array.isArray(c.order) && c.order.every(k => PRODUCTS[k]));
+ if (st.ev && !EVMAP[st.ev.id]) st.ev = null;
+ for (const id in st.br) if (!CITY[id]) delete st.br[id];
+ if (!WALLS[st.cos.wall]) st.cos.wall = 'crema';
+ if (!AWNINGS[st.cos.awning]) st.cos.awning = 'rojo';
+ if (!UNIFORMS[st.cos.uniform]) st.cos.uniform = 'blanco';
+ if (!FLOORS[st.cos.floor]) st.cos.floor = 'cemento';
+ if (!SIGNS[st.cos.sign]) st.cos.sign = 'basico';
+ if (![1, 2, 3].includes(st.speed)) st.speed = 1;
+ if (!['pixel','hd','off'].includes(st.gfx)) st.gfx = 'pixel';
+ st.v = VERSION;
+ return st;
+}
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
+function fromJSON(d) { return sanitize(deepMerge(newState(d.name), d)); }
+function load() {
+ try { const raw = localStorage.getItem(SAVE_KEY); if (!raw) return null; return fromJSON(JSON.parse(raw)); }
+ catch (e) { return null; }
+}
+
+/* ---------- Formato ---------- */
+const nf = new Intl.NumberFormat('es-AR', {maximumFractionDigits:0});
+function money(n) {
+ const a = Math.abs(n), sg = n < 0 ? '-' : '';
+ if (a >= 1e9) return sg + '$' + (a / 1e9).toFixed(2).replace('.', ',') + ' mil M';
+ if (a >= 1e7) return sg + '$' + (a / 1e6).toFixed(1).replace('.', ',') + ' M';
+ return sg + '$' + nf.format(Math.round(a));
+}
+const pct = x => (x * 100).toFixed(1).replace('.', ',') + '%';
+function stars(r) { const f = Math.round(r); let s = ''; for (let i = 0; i < 5; i++) s += i < f ? '★' : '<span class="off">★</span>'; return s + ' ' + r.toFixed(1).replace('.', ','); }
+const hourOf = () => 11 + S.dayT / DAY_SEC * 14;
+function clock() { const h = hourOf(), hh = Math.floor(h) % 24, mm = Math.floor((h % 1) * 4) * 15; return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0'); }
+
+/* ---------- Sonido 8 bits ---------- */
+let AC = null;
+function sfx(type) {
+ if (!S || S.muted) return;
+ try {
+  AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+  if (AC.state === 'suspended') AC.resume();
+  const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime;
+  const f = {tap:[440,660],coin:[988,1319],err:[220,140],buy:[523,784],ev:[330,660],day:[392,523],ach:[659,1047]}[type] || [440,440];
+  o.type = 'square'; o.frequency.setValueAtTime(f[0], t); o.frequency.setValueAtTime(f[1], t + 0.07);
+  g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.22);
+ } catch (e) {}
+}
+
+/* ---------- Mensajes ---------- */
+const lastToast = {};
+function toast(msg, cls = '', key) {
+ if (key) { const n = performance.now(); if (lastToast[key] && n - lastToast[key] < 4000) return; lastToast[key] = n; }
+ const t = document.createElement('div'); t.className = 'toast ' + cls; t.textContent = msg;
+ const box = $('#toasts'); box.append(t);
+ while (box.children.length > 3) box.firstChild.remove();
+ setTimeout(() => t.classList.add('out'), 2600); setTimeout(() => t.remove(), 3000);
+}
+function floatAt(el, txt, cls) {
+ if (!el || !el.isConnected) return;
+ const r = el.getBoundingClientRect(); if (!r.width) return;
+ const d = document.createElement('div');
+ d.className = 'float ' + (cls || ''); d.textContent = txt;
+ d.style.left = (r.left + r.width / 2 + window.scrollX) + 'px'; d.style.top = (r.top + window.scrollY) + 'px';
+ document.body.appendChild(d); setTimeout(() => d.remove(), 1100);
+}
+function log(msg) { S.log.unshift('Día ' + S.day + ': ' + msg); S.log = S.log.slice(0, 15); }
+function modal(html) { const m = $('#modal'); m.innerHTML = `<div class="mbox">${html}</div>`; m.classList.remove('hidden'); paused = true; }
+function closeModal() { $('#modal').classList.add('hidden'); $('#modal').innerHTML = ''; paused = false; last = performance.now(); }
+
+/* ================= LÓGICA ================= */
+const mkt = k => PRODUCTS[k].ref * S.I;
+const evP = n => S.ev ? EVMAP[S.ev.id][n] : undefined;
+const unitCost = k => PRODUCTS[k].ref * S.I * 0.35 * (1 - 0.1 * S.upg.supplier) * (evP('costMul') || 1);
+const cookTime = k => PRODUCTS[k].time * Math.pow(0.8, S.upg.speed);
+const slots = () => 1 + S.upg.slots;
+const qcap = () => 4 + 2 * S.upg.salon + (S.cos.items.terraza ? 2 : 0);
+const blue = () => 1450 * S.I * (1 + S.blue);
+const patrimonio = () => S.money + S.usd * blue() * 0.98;
+const has = k => !!S.cos.items[k];
+function decoPts() {
+ let d = FLOORS[S.cos.floor].deco + SIGNS[S.cos.sign].deco;
+ for (const k in ITEMS) if (has(k)) d += ITEMS[k].deco;
+ return d;
+}
+function evPat() {
+ let m = evP('patMul') || 1;
+ if (S.ev && S.ev.id === 'calor' && has('aire')) m = 1;
+ if (S.ev && S.ev.id === 'clasico' && has('tele')) m = 1.5;
+ return m;
+}
+const patBase = () => 24 * (1 + Math.min(0.5, 0.02 * decoPts())) * (has('piso2') ? 1.1 : 1);
+function earn(x) { S.money += x; S.earned += x; S.dayStats.rev += x; }
+function spend(x) { S.money -= x; S.dayStats.cost += x; }
+function pay(c) {
+ if (S.money < c) { sfx('err'); toast('No te alcanza: faltan ' + money(c - S.money), 'warn', 'nomoney'); return false; }
+ S.money -= c; sfx('buy'); return true;
+}
+function spawnInterval() {
+ let b = 7 / (1 + 0.3 * S.upg.sign) / (0.55 + S.rep * 0.15) / (1 + Math.min(0.3, 0.01 * decoPts())) / (has('piso2') ? 1.15 : 1);
+ if (S.phase >= 2) b /= 1 + 0.1 * S.corp.marca;
+ return b / (evP('spawnMul') || 1);
+}
+function makeOrder() {
+ const un = PKEYS.filter(k => S.p[k].unlocked), tw = un.reduce((a, k) => a + PRODUCTS[k].w, 0);
+ const n = Math.random() < 0.5 ? 1 : Math.random() < 0.7 ? 2 : 3, o = [];
+ for (let i = 0; i < n; i++) { let r = Math.random() * tw; for (const k of un) { r -= PRODUCTS[k].w; if (r <= 0) { o.push(k); break; } } }
+ if (!o.length) o.push(un[0]);
+ return o.sort((a, b) => PKEYS.indexOf(a) - PKEYS.indexOf(b));
+}
+function acceptPrice(order) {
+ const price = order.reduce((a, k) => a + S.p[k].price, 0), ref = order.reduce((a, k) => a + mkt(k), 0);
+ return Math.random() <= clamp(1.9 - price / ref, 0.03, 1);
+}
+function sellAchilata() {
+ if (!has('cart')) return;
+ if (Math.random() < 0.25 * (S.ev && S.ev.id === 'calor' ? 3 : 1)) { earn(3000 * S.I); S.stats.achilata++; G3.achiPop = 0.6; }
+}
+function trySpawn() {
+ sellAchilata();
+ const order = makeOrder();
+ if (S.q.filter(c => !c.del).length >= qcap()) { S.stats.full++; toast('Salón lleno: un cliente se fue', 'warn', 'full'); return; }
+ if (!acceptPrice(order)) { S.stats.expensive++; toast(rnd(['«¡Qué caro, chango!»','«Ni a palos pago eso»','«Me voy al de enfrente»','«¿Esto sale eso? Chau»']), 'warn', 'exp'); return; }
+ const pat = patBase() * evPat() * (0.85 + Math.random() * 0.3);
+ const say = order.includes('mila') && Math.random() < 0.7 ? rnd(SAYS_MILA) : rnd(SAYS);
+ S.q.push({id:S.nid++, order, pat, max:pat, name:rnd(NAMES), say, v:[Math.floor(Math.random()*SHIRTS.length), Math.floor(Math.random()*HAIRS.length), Math.floor(Math.random()*SKINS.length), Math.floor(Math.random()*PANTS.length)]});
+}
+function trySpawnDelivery() {
+ if (S.q.filter(c => c.del).length >= 3) return;
+ const order = makeOrder(); if (!acceptPrice(order)) return;
+ const pat = 45 * (0.9 + Math.random() * 0.2);
+ S.q.push({id:S.nid++, order, pat, max:pat, del:true, name:'Delivery', say:rnd(['Pedido por la app','Barrio Norte','Para Yerba Buena','Al Parque 9 de Julio','Villa Luján']), v:[0,0,0,0]});
+}
+function canServe(c) {
+ const need = {}; c.order.forEach(k => need[k] = (need[k] || 0) + 1);
+ return Object.keys(need).every(k => S.p[k].stock >= need[k]);
+}
+function serve(id, auto) {
+ const i = S.q.findIndex(c => c.id === id); if (i < 0) return false;
+ const c = S.q[i], el = document.getElementById('c' + id);
+ if (!canServe(c)) { if (!auto) { sfx('err'); if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); } toast('Todavía no está listo el pedido', 'warn', 'notready'); } return false; }
+ c.order.forEach(k => S.p[k].stock--);
+ const rev = c.order.reduce((a, k) => a + S.p[k].price, 0), frac = c.pat / c.max;
+ const tip = c.del ? 0 : Math.round(rev * 0.15 * frac);
+ const gain = c.del ? Math.round(rev * 0.85) : rev + tip;
+ const r = rev / c.order.reduce((a, k) => a + mkt(k), 0);
+ earn(gain);
+ S.rep = clamp(S.rep + 0.035 * (frac - 0.25) - (r > 1.3 ? 0.03 : 0), 0, 5);
+ S.stats.mila += c.order.filter(k => k === 'mila').length;
+ if (c.del) { S.stats.delivery++; G3.motoTrip = 1; }
+ S.q.splice(i, 1); S.stats.served++; G3.leave[id] = 'happy';
+ floatAt(el, '+' + money(gain));
+ if (c.order.includes('mila') && Math.random() < 0.5) setTimeout(() => floatAt(document.querySelector('#queue'), '¿Cómo lo querí\'?', 'say'), 150);
+ sfx('coin');
+ return true;
+}
+function cook(k, auto) {
+ const p = S.p[k]; if (!p || !p.unlocked) return false;
+ const fail = m => { if (!auto) { sfx('err'); if (m) toast(m, 'warn', m); } return false; };
+ if (evP('noCook')) return fail('Sin luz no se cocina');
+ if (p.cooking.length >= slots()) return fail('');
+ if (p.stock + p.cooking.length >= STOCK_MAX) return fail('El mostrador está lleno');
+ const c = unitCost(k); if (S.money < c) return fail('No te alcanza para los insumos');
+ spend(c); const t = cookTime(k); p.cooking.push({t, total:t}); if (!auto) sfx('tap');
+ return true;
+}
+function aiCook() {
+ const need = {}; S.q.forEach(c => c.order.forEach(k => need[k] = (need[k] || 0) + 1));
+ let best = null, bs = 0;
+ for (const k of PKEYS) {
+  const p = S.p[k]; if (!p.unlocked || p.cooking.length >= slots()) continue;
+  const have = p.stock + p.cooking.length, sc = (need[k] || 0) - have + (have < 1 ? 0.5 : 0);
+  if (sc > bs) { bs = sc; best = k; }
+ }
+ if (best) cook(best, true);
+}
+function aiServe() {
+ const c = S.q.filter(canServe).sort((a, b) => a.pat - b.pat)[0];
+ if (c) serve(c.id, true);
+}
+function startEvent() {
+ const pool = EVENTS.filter(e => !(e.id === 'bromato' && S.day < 3) && !(e.id === 'deval' && S.day < 4));
+ let r = Math.random() * pool.reduce((a, e) => a + e.w, 0), e = pool[0];
+ for (const x of pool) { r -= x.w; if (r <= 0) { e = x; break; } }
+ S.ev = {id:e.id, t:e.dur, dur:e.dur, msg:e.desc};
+ if (e.id === 'deval') {
+  S.I *= 1.1; S.inf = Math.min(0.3, S.inf + 0.06); S.blue += 0.12; S.stats.devals++;
+  S.ev.msg = 'Los precios de mercado saltaron 10% y la inflación se acelera. ¡Remarcá!';
+ }
+ if (e.id === 'bromato') {
+  if (S.rep >= 3.5 || decoPts() >= 6) { S.rep = Math.min(5, S.rep + 0.2); S.ev.msg = 'Aprobaste con felicitaciones: +reputación'; }
+  else { const f = Math.round(Math.max(0, S.money) * 0.08 + 20000 * S.I); S.money -= f; S.ev.msg = 'Multa de ' + money(f) + '. Subí la reputación o decorá el local.'; }
+ }
+ if (e.id === 'clasico' && has('tele')) S.ev.msg += '. Tu tele los tiene atrapados';
+ if (e.id === 'calor' && has('cart')) S.ev.msg += '. El carrito de achilata no da abasto';
+ log(e.title + (S.ev.msg ? ': ' + S.ev.msg : ''));
+ sfx('ev'); S.evT = 55 + Math.random() * 75;
+}
+function endDay() {
+ const I = S.I; let wages = 0;
+ for (const k in STAFF) wages += STAFF[k].wage * S.staff[k] * I;
+ const rent = 20000 * I * (1 + 0.5 * S.upg.salon) * (has('piso2') ? 1.5 : 1);
+ spend(wages + rent);
+ if (S.money < 0) { const int = -S.money * 0.02; spend(int); toast('Estás en rojo: el banco te cobra ' + money(int) + ' de interés', 'warn'); }
+ if (S.staff.contador) PKEYS.forEach(k => { const p = S.p[k]; if (p.unlocked) p.price = roundP(p.ratio * mkt(k)); });
+ S.inf = clamp(S.inf + (0.05 - S.inf) * 0.04 + (Math.random() - 0.5) * 0.012, 0.01, 0.35);
+ if (S.phase >= 2) chainDay();
+ const net = S.dayStats.rev - S.dayStats.cost;
+ toast('Cierre del día ' + S.day + ': ' + (net >= 0 ? '+' : '') + money(net), net >= 0 ? 'ok' : 'warn');
+ sfx('day'); S.day++; S.dayStats = {rev:0, cost:0}; save();
+}
+function checkAch() {
+ for (const a of ACH) if (!S.ach[a.id] && a.cond()) {
+  S.ach[a.id] = S.day; const rw = a.rew * S.I; if (rw) S.money += rw;
+  toast('Logro: ' + a.name + (rw ? ' (+' + money(rw) + ')' : ''), 'ev'); sfx('ach'); log('Logro desbloqueado: ' + a.name);
+ }
+}
+
+/* ---------- Cadena ---------- */
+function bCalc(id) {
+ const c = CITY[id], b = S.br[id], I = S.I, pol = POLMUL[b.policy];
+ const eff = pol * S.list / I / c.wealth;
+ const df = clamp(1 - (eff - 1) * 1.4, 0.1, 1.7);
+ const q = Math.min(1.2, 0.35 + 0.15 * b.staff + 0.15 * b.mgr + 0.05 * S.corp.compras + 0.05 * S.corp.escuela);
+ const boost = b.boostT > 0 ? b.boostMul : 1;
+ let mk = c.market;
+ if (id === 'fam' && S.p.empanada.unlocked) mk *= 1.4;
+ if (id === 'sim' && S.ev && S.ev.id === 'simoca') mk *= 2.5;
+ const demand = mk * df * (1 + 0.2 * S.corp.marca) * (0.5 + 0.5 * q) * (1 + 0.15 * b.mkt) * boost * (0.6 + 0.6 * b.rep);
+ const cap = 40 * b.staff * [0.8, 1.1, 1.35][b.mgr];
+ const closed = b.closedT > 0, sales = closed ? 0 : Math.min(demand, cap);
+ const ticket = 11000 * S.list * pol, rev = sales * ticket;
+ const food = sales * 11000 * I * 0.4 * (1 - 0.08 * S.corp.compras);
+ const wages = (b.staff * 70000 + [0, 60000, 160000][b.mgr] * (S.corp.escuela ? 0.7 : 1)) * I;
+ const cost = food + wages + c.rent * I + b.mkt * 50000 * I;
+ const sat = clamp(0.25 + 0.5 * q - (demand > cap ? 0.3 * (1 - cap / demand) : 0) - Math.max(0, eff - 1) * 0.5 + Math.max(0, 1 - eff) * 0.3, 0, 1);
+ return {demand, cap, sales, rev, cost, profit:rev - cost, sat, q, closed, eff};
+}
+function chainProfit() { let t = 0; for (const id in S.br) t += bCalc(id).profit; return t; }
+function chainTick(dt) { const f = dt / DAY_SEC; for (const id in S.br) { const r = bCalc(id); earn(r.rev * f); spend(r.cost * f); } }
+const BEV = [
+ {t:'reseña viral en TikTok: +60% de demanda por 3 días', good:true, fn:b => { b.boostT = 3; b.boostMul = 1.6; }},
+ {t:'hay un recital en la ciudad: +50% de demanda hoy', good:true, fn:b => { b.boostT = 1; b.boostMul = 1.5; }},
+ {t:'renunció el encargado', cond:b => b.mgr === 1, fn:b => { b.mgr = 0; }},
+ {t:'clausura de bromatología por 2 días', cond:(b, r) => r.q < 0.75, fn:b => { b.closedT = 2; }},
+ {t:'paro gastronómico: cerrado 1 día', cond:b => b.mgr < 2, fn:b => { b.closedT = Math.max(b.closedT, 1); }},
+ {t:'se rompió la freidora (-' , cost:300000, fn:() => {}}
+];
+function chainDay() {
+ if (S.corp.contador) S.list = S.I;
+ for (const id in S.br) {
+  const b = S.br[id], r = bCalc(id);
+  b.rep = clamp(b.rep + (r.sat - b.rep) * 0.2, 0, 1);
+  if (b.boostT > 0) b.boostT--; if (b.closedT > 0) b.closedT--;
+  if (Math.random() < 0.07 * (b.mgr === 0 ? 1.6 : 1)) {
+   const pool = BEV.filter(e => !e.cond || e.cond(b, r)), e = rnd(pool);
+   let txt = e.t;
+   if (e.cost) { const c = e.cost * S.I; spend(c); txt += money(c) + ')'; }
+   e.fn(b); const msg = CITY[id].name + ': ' + txt; log(msg); toast(msg, e.good ? 'ok' : 'warn');
+  }
+ }
+}
+function goals() {
+ return [
+  ['Menú completo (' + PKEYS.length + ' productos)', PKEYS.every(k => S.p[k].unlocked)],
+  ['Parrillero y cajero contratados', S.staff.parrillero > 0 && S.staff.cajero > 0],
+  ['Reputación de 4★ o más', S.rep >= 4],
+  ['Decoración de 8 puntos o más (tenés ' + decoPts() + ')', decoPts() >= 8],
+  ['Patrimonio de ' + money(3e6 * S.I) + ' (plata + dólares)', patrimonio() >= 3e6 * S.I]
+ ];
+}
+
+/* ---------- Bucle de juego ---------- */
+let achT = 0;
+function tick(dt) {
+ S.t += dt;
+ S.I *= Math.pow(1 + S.inf, dt / (DAY_SEC * 30));
+ S.blue = clamp(S.blue + (Math.random() - 0.5) * 0.03 * dt + (0.03 - S.blue) * 0.01 * dt, -0.08, 0.5);
+ if (S.ev) { S.ev.t -= dt; if (S.ev.t <= 0) S.ev = null; }
+ else { S.evT -= dt; if (S.evT <= 0) startEvent(); }
+ if (!evP('noCook')) for (const k of PKEYS) {
+  const p = S.p[k];
+  p.cooking.forEach(c => c.t -= dt);
+  while (p.cooking.length && p.cooking[0].t <= 0) { p.cooking.shift(); p.stock++; }
+ }
+ S.spawnT -= dt;
+ if (S.spawnT <= 0) { trySpawn(); S.spawnT = spawnInterval() * (0.6 + Math.random() * 0.8); }
+ if (has('moto')) { S.delT -= dt; if (S.delT <= 0) { trySpawnDelivery(); S.delT = 14 / (0.55 + S.rep * 0.15) * (0.7 + Math.random() * 0.6); } }
+ for (let i = S.q.length - 1; i >= 0; i--) {
+  const c = S.q[i]; c.pat -= dt;
+  if (c.pat <= 0) {
+   floatAt(document.getElementById('c' + c.id), c.del ? 'Pedido cancelado' : '¡Me voy!', 'bad');
+   S.q.splice(i, 1); S.stats.lost++; S.rep = clamp(S.rep - (c.del ? 0.06 : 0.1), 0, 5); G3.leave[c.id] = 'angry'; sfx('err');
+  }
+ }
+ if (S.staff.parrillero) { S.ai.p -= dt; if (S.ai.p <= 0) { aiCook(); S.ai.p = [0, 1.8, 1.1, 0.6][S.staff.parrillero]; } }
+ if (S.staff.cajero) { S.ai.c -= dt; if (S.ai.c <= 0) { aiServe(); S.ai.c = [0, 2.2, 1.3, 0.7][S.staff.cajero]; } }
+ if (S.phase >= 2) chainTick(dt);
+ S.dayT += dt; if (S.dayT >= DAY_SEC) { S.dayT -= DAY_SEC; endDay(); }
+ achT += dt; if (achT > 1) { achT = 0; checkAch(); }
+}
+
+/* ================= ACCIONES ================= */
+function adjPrice(k, f) { const p = S.p[k]; p.price = roundP(p.price * f); p.ratio = p.price / mkt(k); }
+function buy(arg) {
+ const [kind, k] = arg.split(':');
+ if (kind === 'menu') {
+  const p = S.p[k]; if (!p || p.unlocked) return;
+  if (pay(PRODUCTS[k].unlock * S.I)) { p.unlocked = true; p.price = roundP(mkt(k)); p.ratio = 1; toast('Nuevo en el menú: ' + PRODUCTS[k].name, 'ok'); G3.dirty = true; }
+ } else if (kind === 'upg') {
+  const lv = S.upg[k], cs = UPG[k].costs; if (lv >= cs.length) return;
+  if (pay(cs[lv] * S.I)) S.upg[k]++;
+ } else if (kind === 'staff') {
+  const lv = S.staff[k], cs = STAFF[k].costs; if (lv >= cs.length) return;
+  if (pay(cs[lv] * S.I)) { S.staff[k]++; toast(lv ? STAFF[k].name + ' capacitado' : 'Contrataste un ' + STAFF[k].name.toLowerCase(), 'ok'); G3.dirty = true; }
+ } else if (kind === 'corp') {
+  const lv = S.corp[k], cs = CORP[k].costs; if (lv >= cs.length) return;
+  if (pay(cs[lv] * S.I)) { S.corp[k]++; if (k === 'contador') S.list = S.I; }
+ } else if (kind === 'item') {
+  if (has(k) || !ITEMS[k]) return;
+  if (pay(ITEMS[k].cost * S.I)) { S.cos.items[k] = 1; toast('Compraste: ' + ITEMS[k].name, 'ok'); log('Compraste ' + ITEMS[k].name); G3.dirty = true; }
+ } else if (kind === 'floor') {
+  if (S.cos.floors[k]) { S.cos.floor = k; sfx('tap'); }
+  else if (pay(FLOORS[k].cost * S.I)) { S.cos.floors[k] = 1; S.cos.floor = k; }
+  G3.dirty = true;
+ } else if (kind === 'signs') {
+  if (S.cos.signs[k]) { S.cos.sign = k; sfx('tap'); }
+  else if (pay(SIGNS[k].cost * S.I)) { S.cos.signs[k] = 1; S.cos.sign = k; }
+  G3.dirty = true;
+ }
+}
+function setCos(arg) { const [k, v] = arg.split(':'); S.cos[k] = v; sfx('tap'); G3.dirty = true; }
+function foundChain() {
+ if (!goals().every(g => g[1])) return;
+ S.phase = 2; S.list = S.I; tab = 'cadena'; log('Fundaste la cadena ' + S.name);
+ modal(`<div class="title" style="font-size:16px">¡NACE UNA<br>CADENA!</div>${img('store', 96)}
+ <p>Un empresario de Yerba Buena probó tu sánguche de mila y quedó enamorado. Te propone armar una sociedad: vos ponés la marca y la receta, él los contactos.</p>
+ <p>Desde ahora abrís sucursales: primero en el interior de Tucumán y, con logística, en el resto del país. Cada una funciona sola, pero vos decidís su <b>política de precios</b>, su <b>personal</b>, si lleva <b>encargado</b> y cuánto pone en <b>marketing</b>.</p>
+ <p>Ojo con la <b>lista de precios</b> de la cadena: si no la actualizás, la inflación te come el margen en todas las sucursales a la vez. Tu local original lo seguís atendiendo vos.</p>
+ <button class="btn big g" data-act="close">¡Vamos, chango!</button>`);
+}
+function branchAct(a, id) {
+ const b = S.br[id], I = S.I;
+ if (a === 'open') {
+  const c = CITY[id]; if (!c || b || S.corp.logistica < c.log) return;
+  if (pay(c.cost * I)) { S.br[id] = {staff:1, mgr:0, policy:1, mkt:0, closedT:0, boostT:0, boostMul:1, rep:0.6}; log('Abriste en ' + c.name); toast('¡Inauguraste la sucursal ' + c.name + '!', 'ok'); }
+ } else if (!b) return;
+ else if (a === 'bstaff') { if (b.staff < 4 && pay(1.2e6 * b.staff * I)) b.staff++; }
+ else if (a === 'bmgr') { if (b.mgr === 0 && pay(1e6 * I)) b.mgr = 1; }
+ else if (a === 'bmgr2') { if (b.mgr < 2 && S.corp.escuela && pay(4e6 * I)) b.mgr = 2; }
+ else if (a === 'bpol') { b.policy = (b.policy + 1) % 3; sfx('tap'); }
+ else if (a === 'bmkt') { if (b.mkt < 3 && pay(0.8e6 * (b.mkt + 1) * I)) b.mkt++; }
+}
+function ending() {
+ S.won = true; log('¡Salida a la bolsa!');
+ modal(`<div class="title" style="font-size:16px">¡TIMBREASTE<br>EN LA BOLSA!</div>${img('tower', 64)}
+ <p><b>${esc(S.name)}</b> cotiza en la Bolsa de Comercio de Buenos Aires. Empezaste con una plancha en una esquina de Tucumán y hoy tenés una cadena nacional.</p>
+ <div class="kv"><span>Días</span><b>${S.day}</b></div>
+ <div class="kv"><span>Clientes atendidos por vos</span><b>${nf.format(S.stats.served)}</b></div>
+ <div class="kv"><span>Milas vendidas</span><b>${nf.format(S.stats.mila)}</b></div>
+ <div class="kv"><span>Sucursales</span><b>${Object.keys(S.br).length}</b></div>
+ <div class="kv"><span>Inflación acumulada</span><b>${nf.format((S.I - 1) * 100)}%</b></div>
+ <button class="btn big g" data-act="close">Seguir jugando</button>`);
+}
+const GFX_NAME = {pixel:'Pixelado', hd:'Nítido', off:'Sin 3D'};
+function pauseMenu() {
+ modal(`<div class="title" style="font-size:18px">PAUSA</div>
+ <div class="sub">Día ${S.day} · ${clock()}</div>
+ <button class="btn big g" data-act="close">Continuar</button>
+ <button class="btn big b" data-act="speed2">Velocidad: x${S.speed}</button>
+ <button class="btn big b" data-act="gfx">Gráficos: ${GFX_NAME[S.gfx]}</button>
+ <button class="btn big b" data-act="mute2">Sonido: ${S.muted ? 'NO' : 'SÍ'}</button>
+ <button class="btn big y" data-act="help">Cómo se juega</button>
+ <button class="btn big y" data-act="backup">Copia de seguridad</button>
+ <button class="btn big" data-act="reset">Borrar partida</button>`);
+}
+function helpModal() {
+ modal(`<div class="sub">CÓMO SE JUEGA</div>
+ <p><b>Cocina:</b> tocá una estación para preparar comida (pagás los insumos). Cuando un cliente se pone verde, tocalo para cobrarle. Si espera demasiado, se va y baja tu reputación. En PC: teclas 1 a 6 para cocinar, espacio para entregar, P para pausar.</p>
+ <p><b>Precios:</b> la inflación sube el precio de mercado todos los días. Remarcá seguido, pero si te pasás, la gente se va.</p>
+ <p><b>Mejoras:</b> menú, equipamiento y personal que trabaja solo.</p>
+ <p><b>Local:</b> decorá y personalizá. La decoración hace que lleguen más clientes y esperen más. Las compras grandes cambian el juego: achilata, delivery, terraza, segundo piso.</p>
+ <p><b>Vista 3D:</b> arrastrá para girar y subir o bajar la cámara; pellizcá o usá la rueda para el zoom.</p>
+ <p><b>Cadena:</b> con el local a pleno, fundás una cadena y manejás sucursales. El final es salir a la bolsa.</p>
+ <button class="btn big g" data-act="pause">Volver</button>`);
+}
+function backupModal() {
+ let code = '';
+ try { code = btoa(unescape(encodeURIComponent(JSON.stringify(S)))); } catch (e) {}
+ modal(`<div class="sub">COPIA DE SEGURIDAD</div>
+ <p>Guardá este código para llevar tu partida a otro navegador o dispositivo.</p>
+ <textarea id="bk-out" readonly>${code}</textarea>
+ <button class="btn big b" data-act="copy">Copiar código</button>
+ <label>Cargar una partida</label><textarea id="bk-in" placeholder="Pegá acá un código"></textarea>
+ <button class="btn big y" data-act="import">Cargar</button>
+ <button class="btn big g" data-act="pause">Volver</button>`);
+}
+
+function act(a, arg) {
+ switch (a) {
+  case 'cook': cook(arg, false); break;
+  case 'serve': serve(+arg, false); break;
+  case 'tab': tab = arg; sfx('tap'); window.scrollTo(0, 0); break;
+  case 'price': { const [k, f] = arg.split(':'); adjPrice(k, +f); sfx('tap'); break; }
+  case 'remarcar': PKEYS.forEach(k => { const p = S.p[k]; if (p.unlocked) p.price = roundP(p.ratio * mkt(k)); }); sfx('buy'); toast('Remarcaste toda la carta', 'ok'); break;
+  case 'igualar': PKEYS.forEach(k => { const p = S.p[k]; if (p.unlocked) { p.price = roundP(mkt(k)); p.ratio = 1; } }); sfx('buy'); break;
+  case 'buy': buy(arg); break;
+  case 'cos': setCos(arg); break;
+  case 'rename': { const n = ($('#rn').value || '').trim().slice(0, 22); if (n) { S.name = n; G3.dirty = true; sfx('buy'); toast('Ahora te llamás ' + n, 'ok'); } break; }
+  case 'found': foundChain(); break;
+  case 'open': case 'bstaff': case 'bmgr': case 'bmgr2': case 'bpol': case 'bmkt': branchAct(a, arg); break;
+  case 'list': S.list = S.I; sfx('buy'); toast('Lista de precios actualizada en toda la cadena', 'ok'); break;
+  case 'ipo': if (Object.keys(S.br).length >= IPO_BRANCHES && S.corp.marca >= 3 && pay(IPO_COST * S.I)) ending(); break;
+  case 'usdbuy': {
+   const rate = blue() * 1.02, max = Math.floor(Math.max(0, S.money) / rate), n = arg === 'all' ? max : Math.min(+arg, max);
+   if (n <= 0) { sfx('err'); toast('No te alcanza para comprar dólares', 'warn'); break; }
+   S.money -= n * rate; S.usd += n; sfx('buy'); toast('Compraste US$ ' + nf.format(n) + ' a ' + money(rate), 'ok'); break;
+  }
+  case 'usdsell': {
+   const n = arg === 'all' ? S.usd : Math.min(+arg, S.usd);
+   if (n <= 0) { sfx('err'); break; }
+   const rate = blue() * 0.98; S.usd -= n; S.money += n * rate; sfx('coin'); toast('Vendiste US$ ' + nf.format(n) + ' a ' + money(rate), 'ok'); break;
+  }
+  case 'pause': if (paused && $('#modal .mbox')) { pauseMenu(); } else pauseMenu(); break;
+  case 'speed': S.speed = S.speed % 3 + 1; sfx('tap'); break;
+  case 'speed2': S.speed = S.speed % 3 + 1; pauseMenu(); break;
+  case 'gfx': S.gfx = {pixel:'hd', hd:'off', off:'pixel'}[S.gfx]; G3.resized = true; pauseMenu(); break;
+  case 'mute': S.muted = !S.muted; break;
+  case 'mute2': S.muted = !S.muted; pauseMenu(); break;
+  case 'help': helpModal(); break;
+  case 'backup': backupModal(); break;
+  case 'copy': { const t = $('#bk-out'); try { navigator.clipboard.writeText(t.value).then(() => toast('Código copiado', 'ok'), () => { t.select(); toast('Seleccioná y copiá el código a mano', 'warn'); }); } catch (e) { t.select(); } break; }
+  case 'import': {
+   try { const d = JSON.parse(decodeURIComponent(escape(atob(($('#bk-in').value || '').trim())))); if (!d || !d.p) throw 0; S = fromJSON(d); save(); G3.reset(); closeModal(); toast('Partida cargada', 'ok'); }
+   catch (e) { toast('El código no es válido', 'warn'); }
+   break;
+  }
+  case 'reset': modal(`<div class="sub">¿Borrar la partida y empezar de cero?</div><button class="btn big" data-act="doreset">Sí, borrar todo</button><button class="btn big b" data-act="pause">Cancelar</button>`); break;
+  case 'doreset': try { localStorage.removeItem(SAVE_KEY); } catch (e) {} S = newState(); tab = 'cocina'; G3.reset(); intro(); break;
+  case 'start': { const n = ($('#nm').value || '').trim().slice(0, 22) || 'La Esquina'; S = newState(n); G3.reset(); closeModal(); save(); break; }
+  case 'close': closeModal(); break;
+  case 'rot': G3.theta += +arg; break;
+  case 'zoom': G3.zoom = clamp(G3.zoom * +arg, 0.6, 2.6); break;
+ }
+ render();
+}
+/* Toque rápido: se dispara al soltar, y se cancela si el dedo se movió (para poder scrollear) */
+let tapStart = null;
+document.addEventListener('pointerdown', e => {
+ const t = e.target.closest('[data-fast]');
+ if (!t || paused) { tapStart = null; return; }
+ tapStart = {id:e.pointerId, x:e.clientX, y:e.clientY, a:t.dataset.fast, arg:t.dataset.arg, t:performance.now()};
+});
+document.addEventListener('pointerup', e => {
+ if (!tapStart || e.pointerId !== tapStart.id) return;
+ const s = tapStart; tapStart = null;
+ if (paused || Math.hypot(e.clientX - s.x, e.clientY - s.y) > 14 || performance.now() - s.t > 800) return;
+ act(s.a, s.arg);
+});
+document.addEventListener('pointercancel', () => tapStart = null);
+document.addEventListener('click', e => {
+ const t = e.target.closest('[data-act]'); if (!t) return;
+ act(t.dataset.act, t.dataset.arg);
+});
+document.addEventListener('keydown', e => {
+ if (!S || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+ if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') { e.preventDefault(); if (paused) closeModal(); else pauseMenu(); render(); return; }
+ if (paused) return;
+ const n = parseInt(e.key, 10);
+ if (n >= 1 && n <= PKEYS.length) { cook(PKEYS[n - 1], false); render(); }
+ if (e.code === 'Space') { e.preventDefault(); const c = S.q.filter(canServe).sort((a, b) => a.pat - b.pat)[0]; if (c) serve(c.id, false); else sfx('err'); render(); }
+});
+
+/* ================= 3D VOXEL ================= */
+const G3 = {ok:false, failed:false, theta:0.65, phi:0.72, zoom:1, dirty:true, people:{}, leave:{}, seats:[], seatUsed:{}, smoke:[], clouds:[], foods:{}, emis:[], walls:[], motoTrip:0, achiPop:0, staffMeshes:{}, resized:true,
+ reset() { this.dirty = true; this.leave = {}; this.seatUsed = {}; if (!this.ok) return; for (const id in this.people) this.scene.remove(this.people[id].g); this.people = {}; }};
+const shade = (hex, f) => { const c = new THREE.Color(hex); c.multiplyScalar(f); return '#' + c.getHexString(); };
+function mat(c, em) {
+ const key = (em ? 'E' : '') + c;
+ if (G3.mats[key]) return G3.mats[key];
+ const m = em ? new THREE.MeshLambertMaterial({color:c, emissive:c, emissiveIntensity:0.4}) : new THREE.MeshLambertMaterial({color:c});
+ if (em) G3.emis.push(m);
+ return G3.mats[key] = m;
+}
+class VB {
+ constructor() { this.b = []; }
+ add(x, y, z, w, h, d, c) { this.b.push([x, y, z, w, h, d, c, 0]); return this; }
+ addE(x, y, z, w, h, d, c) { this.b.push([x, y, z, w, h, d, c, 1]); return this; }
+ build() {
+  const g = new THREE.Group(), by = {};
+  for (const b of this.b) { const k = (b[7] ? 'E' : '') + b[6]; (by[k] = by[k] || []).push(b); }
+  const o = new THREE.Object3D();
+  for (const k in by) {
+   const arr = by[k], m = new THREE.InstancedMesh(G3.unit, mat(arr[0][6], arr[0][7]), arr.length);
+   arr.forEach((b, i) => { o.position.set(b[0] + b[3] / 2, b[1] + b[4] / 2, b[2] + b[5] / 2); o.scale.set(b[3], b[4], b[5]); o.updateMatrix(); m.setMatrixAt(i, o.matrix); });
+   g.add(m);
+  }
+  return g;
+ }
+}
+function init3D() {
+ if (G3.ok || G3.failed) return;
+ if (typeof THREE === 'undefined') { G3.failed = true; return; }
+ try {
+  const r = new THREE.WebGLRenderer({antialias:false, powerPreference:'low-power'});
+  G3.r = r; G3.canvas = r.domElement; G3.mats = {};
+  G3.scene = new THREE.Scene();
+  G3.cam = new THREE.OrthographicCamera(-10, 10, 10, -10, -200, 400);
+  G3.hemi = new THREE.HemisphereLight(0xffffff, 0x7a8a6a, 0.75); G3.scene.add(G3.hemi);
+  G3.sun = new THREE.DirectionalLight(0xffffff, 0.75); G3.sun.position.set(12, 25, 9); G3.scene.add(G3.sun);
+  G3.unit = new THREE.BoxGeometry(1, 1, 1);
+  G3.ok = true;
+  const c = G3.canvas, ptrs = new Map(); let pd0 = 0, z0 = 1;
+  const pdist = () => { const a = [...ptrs.values()]; return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1; };
+  c.addEventListener('pointerdown', e => { try { c.setPointerCapture(e.pointerId); } catch (_) {} ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); if (ptrs.size === 2) { pd0 = pdist(); z0 = G3.zoom; } });
+  c.addEventListener('pointermove', e => {
+   const p = ptrs.get(e.pointerId); if (!p) return;
+   if (ptrs.size === 1) { G3.theta -= (e.clientX - p.x) * 0.012; G3.phi = clamp(G3.phi + (e.clientY - p.y) * 0.006, 0.3, 1.3); }
+   p.x = e.clientX; p.y = e.clientY;
+   if (ptrs.size === 2) G3.zoom = clamp(z0 * pdist() / pd0, 0.6, 2.6);
+  });
+  const up = e => ptrs.delete(e.pointerId);
+  c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up); c.addEventListener('lostpointercapture', up);
+  c.addEventListener('wheel', e => { e.preventDefault(); G3.zoom = clamp(G3.zoom * (e.deltaY < 0 ? 1.1 : 0.91), 0.6, 2.6); }, {passive:false});
+  for (let i = 0; i < 5; i++) {
+   const cl = new VB().add(0, 0, 0, 4, 1.2, 2.5, '#ffffff').add(1, 0.8, 0.4, 2.5, 1, 1.8, '#ffffff').build();
+   cl.position.set(-40 + i * 18, 22 + (i % 3) * 3, -40 + (i % 2) * 8); G3.scene.add(cl); G3.clouds.push(cl);
+  }
+ } catch (e) { G3.failed = true; G3.ok = false; }
+}
+function signTexture() {
+ const cv = document.createElement('canvas'); cv.width = 256; cv.height = 80;
+ const x = cv.getContext('2d'), aw = AWNINGS[S.cos.awning];
+ x.fillStyle = aw[0]; x.fillRect(0, 0, 256, 80);
+ x.fillStyle = aw[1]; x.fillRect(0, 0, 256, 6); x.fillRect(0, 74, 256, 6);
+ x.textAlign = 'center'; x.textBaseline = 'middle';
+ const name = S.name.toUpperCase(); let fs = 18;
+ x.font = fs + 'px "Press Start 2P", monospace';
+ while (x.measureText(name).width > 236 && fs > 8) { fs -= 1; x.font = fs + 'px "Press Start 2P", monospace'; }
+ x.fillStyle = '#2b1d14'; x.fillText(name, 130, 34);
+ x.fillStyle = aw[1] === '#2b1d14' ? '#ffffff' : aw[1]; x.fillText(name, 128, 32);
+ x.font = '8px "Press Start 2P", monospace'; x.fillStyle = aw[1];
+ x.fillText('SANGUCHERÍA · TUCUMÁN', 128, 60);
+ const t = new THREE.CanvasTexture(cv); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
+ return t;
+}
+function tableAt(B, x, z, out) {
+ B.add(x - 0.7, 1.35, z - 0.6, 1.4, 0.2, 1.2, '#8b5a2b').add(x - 0.15, 0, z - 0.15, 0.3, 1.35, 0.3, '#5a3a1a');
+ for (const s of [-1, 1]) {
+  B.add(x + s * 1.25 - 0.35, 0.7, z - 0.35, 0.7, 0.15, 0.7, '#b5523a').add(x + s * 1.25 - 0.3, 0, z - 0.3, 0.6, 0.7, 0.6, '#7a2f1f');
+  B.add(x + s * 1.6 - 0.1, 0.85, z - 0.35, 0.2, 1, 0.7, '#b5523a');
+  G3.seats.push({x:x + s * 1.25, z, rot:s > 0 ? -Math.PI / 2 : Math.PI / 2, out});
+ }
+}
+function build3D() {
+ const sc = G3.scene;
+ if (G3.static) { sc.remove(G3.static); G3.walls.forEach(w => { sc.remove(w.full); sc.remove(w.stub); }); }
+ for (const k in G3.staffMeshes) sc.remove(G3.staffMeshes[k]);
+ if (G3.moto) sc.remove(G3.moto);
+ if (G3.foodGroup) sc.remove(G3.foodGroup);
+ G3.smoke.forEach(s => sc.remove(s)); G3.smoke = [];
+ G3.walls = []; G3.seats = []; G3.seatUsed = {}; G3.staffMeshes = {}; G3.foods = {};
+ const C = S.cos, wc = WALLS[C.wall], aw = AWNINGS[C.awning], H = has('piso2') ? 10 : 6, B = new VB();
+ // terreno, calle y cerro
+ B.add(-40, -1.2, -40, 80, 1, 80, '#7fb069');
+ B.add(-40, -1.1, 8.6, 80, 1, 8, '#3d3d46');
+ for (let x = -38; x < 38; x += 4) B.add(x, -0.1, 12.4, 2, 0.05, 0.3, '#f2d14b');
+ B.add(-40, -1.1, 16.6, 80, 1.1, 4, '#bdb6a8');
+ for (let x = -18; x < 18; x += 2) B.add(x, -1, 4, 2, 1, 4.6, (Math.round(x / 2) & 1) ? '#c9c3b6' : '#bdb6a8');
+ B.add(-18, -1, 8.4, 36, 1.12, 0.3, '#e6e1d6');
+ for (let x = -42; x < 42; x += 2.5) {
+  const h = 8 + 5 * Math.sin(x * 0.11) + 2.5 * Math.sin(x * 0.37 + 1);
+  B.add(x, -1, -44, 2.5, h, 7, '#4b7a3a').add(x, h - 1, -44, 2.5, 0.8, 7, '#5f9446');
+  B.add(x, -1, -37, 2.5, h * 0.55, 5, '#5c8f45');
+ }
+ // piso del local
+ const F = C.floor;
+ for (let x = -8; x < 8; x++) for (let z = -7; z < 4; z++) {
+  let col = '#9e9e9e';
+  if (F === 'cemento') col = ((x + z) & 1) ? '#a3a19c' : '#9a9893';
+  if (F === 'damero') col = ((x + z) & 1) ? '#f2f2f2' : '#262626';
+  if (F === 'calcareo') col = ((x & 1) && (z & 1)) ? '#7a9c8e' : (((x + z) & 3) === 0 ? '#b5523a' : '#e3d3b4');
+  if (F === 'madera') col = (z & 1) ? '#a8743f' : ((x & 3) === 0 ? '#8a5c2c' : '#96642f');
+  B.add(x, -1, z, 1, 1, 1, col);
+ }
+ // mostrador y cocina
+ B.add(-7, 0, -2, 13, 1.9, 1, aw[0]).add(-7.2, 1.9, -2.2, 13.4, 0.25, 1.4, '#e6e6e6');
+ for (let x = -7; x < 6; x += 2) B.add(x, 0.6, -1.02, 1, 0.3, 0.05, aw[1]);
+ B.add(-6.5, 0, -5.4, 3, 1.8, 1.2, '#8a8a8a').add(-6.4, 1.8, -5.35, 2.8, 0.15, 1.1, '#2a2a2a');
+ B.add(-3, 0, -5.4, 2, 1.8, 1.2, '#b0b0b0').add(-2.8, 1.8, -5.2, 1.6, 0.1, 0.8, '#e0b020');
+ if (S.p.chori.unlocked) {
+  B.add(-0.6, 0, -5.4, 2.6, 1.4, 1.2, '#555555');
+  for (let i = 0; i < 5; i++) B.add(-0.5 + i * 0.5, 1.45, -5.4, 0.15, 0.1, 1.2, '#222222');
+  B.addE(-0.5, 1.35, -5.3, 2.4, 0.1, 1, '#ff5a1f');
+ }
+ if (S.p.empanada.unlocked) {
+  B.add(2.4, 0, -5.6, 2.8, 1, 1.6, '#8a4a25').add(2.6, 1, -5.5, 2.4, 0.7, 1.4, '#b5652d').add(2.9, 1.7, -5.4, 1.8, 0.5, 1.2, '#c27443').add(3.3, 2.2, -5.2, 1, 0.3, 0.8, '#c98a5a');
+  B.add(3.4, 0.95, -4.12, 0.9, 0.65, 0.05, '#2a1a10').addE(3.55, 1, -4.1, 0.6, 0.3, 0.05, '#ff7a1f');
+ }
+ B.add(5.6, 0, -5.6, 1.4, 3.3, 1.3, '#e8e8e8').add(5.7, 0.4, -4.32, 1.2, 2.6, 0.05, '#9fd3e6');
+ for (let i = 0; i < 3; i++) B.add(5.8, 0.8 + i * 0.8, -4.3, 1, 0.12, 0.04, ['#d7263d','#2e9e44','#ff8c1a'][i]);
+ // pizarrón del menú
+ B.add(-6.5, 3.3, -5.99, 6, 1.9, 0.08, '#1f2b24');
+ PKEYS.forEach((k, i) => { if (S.p[k].unlocked) B.add(-6.1 + (i % 2) * 2.9, 4.75 - Math.floor(i / 2) * 0.5, -5.9, 2.2, 0.16, 0.04, i % 2 ? '#ffd23f' : '#f4f4f4'); });
+ // mesas
+ tableAt(B, -5.4, 2.5); tableAt(B, -2.2, 2.5);
+ if (has('mesas')) tableAt(B, 1, 2.5);
+ // decoración interior
+ if (has('rocola')) {
+  B.add(6.1, 0, 0.6, 1.2, 2.4, 1.1, '#7b2d8b').add(6.2, 2.4, 0.7, 1, 0.4, 0.9, '#9b4dab');
+  B.addE(6.15, 0.6, 1.66, 1.1, 0.15, 0.05, '#ff4fa3').addE(6.15, 1.1, 1.66, 1.1, 0.15, 0.05, '#4fd1ff').addE(6.15, 1.6, 1.66, 1.1, 0.15, 0.05, '#ffe27a');
+ }
+ // paredes
+ const mkWall = (nx, nz, full, stub) => { const w = {nx, nz, full:full.build(), stub:stub.build()}; sc.add(w.full); sc.add(w.stub); G3.walls.push(w); };
+ const zb = shade(wc, 0.8);
+ { // fondo
+  const f = new VB().add(-7.8, 0, -6.3, 15.6, H, 0.3, wc).add(-7.5, 0, -6.02, 15, 0.8, 0.05, zb);
+  if (has('mural')) {
+   f.add(0.6, 2.6, -6.02, 6.4, 3, 0.05, '#9fd3e6').addE(5.6, 4.6, -6.0, 0.7, 0.7, 0.04, '#ffd23f');
+   for (let i = 0; i < 7; i++) { const h = 0.8 + Math.abs(Math.sin(i * 1.3)) * 1.6; f.add(0.6 + i * 0.9, 2.6, -6.0, 0.9, h, 0.04, i % 2 ? '#4b7a3a' : '#5f9446'); }
+   f.add(0.6, 2.6, -5.99, 6.4, 0.3, 0.04, '#e58fb5');
+  }
+  if (has('piso2')) f.add(-7.8, 6, -6.3, 15.6, 0.3, 0.3, zb);
+  mkWall(0, -1, f, new VB().add(-7.8, 0, -6.3, 15.6, 0.9, 0.3, wc));
+ }
+ { // izquierda
+  const f = new VB().add(-7.8, 0, -6.3, 0.3, H, 10.3, wc).add(-7.52, 0, -6, 0.05, 0.8, 9.7, zb);
+  f.add(-7.85, 2, 0, 0.4, 2, 2.4, '#9fd3e6').add(-7.85, 1.8, -0.2, 0.4, 0.2, 2.8, '#ffffff');
+  if (has('tele')) f.add(-7.5, 3.1, -3.4, 0.2, 1.5, 2.6, '#111111').addE(-7.32, 3.25, -3.25, 0.05, 1.2, 2.3, '#3fbf7f').add(-7.3, 3.5, -2.3, 0.04, 0.3, 0.3, '#ffffff');
+  mkWall(-1, 0, f, new VB().add(-7.8, 0, -6.3, 0.3, 0.9, 10.3, wc));
+ }
+ { // derecha
+  const f = new VB().add(7.5, 0, -6.3, 0.3, H, 10.3, wc).add(7.47, 0, -6, 0.05, 0.8, 9.7, zb);
+  if (has('aire')) f.add(7.1, 4.2, -3.5, 0.4, 0.8, 2.2, '#f0f0f0').add(7.08, 4.3, -3.4, 0.04, 0.1, 2, '#bbbbbb');
+  mkWall(1, 0, f, new VB().add(7.5, 0, -6.3, 0.3, 0.9, 10.3, wc));
+ }
+ { // frente con toldo
+  const f = new VB().add(-7.8, 0, 3.7, 11.5, 1, 0.3, wc).add(5.3, 0, 3.7, 2.5, 1, 0.3, wc);
+  for (const px of [-7.8, -2.2, 3.1, 5.3, 7.2]) f.add(px, 1, 3.7, 0.6, 3.5, 0.3, wc);
+  f.add(-7.8, 4.5, 3.7, 15.6, H - 4.5, 0.3, wc);
+  for (let x = -7.8; x < 7.8; x += 1) { const col = (Math.round(x + 7.8) & 1) ? aw[1] : aw[0]; f.add(x, 4.1, 4.0, 1, 0.25, 1.7, col).add(x, 3.6, 5.6, 1, 0.55, 0.12, col); }
+  if (has('piso2')) {
+   for (const wx of [-6.5, -1.5, 3.5]) f.add(wx, 6.6, 3.98, 2.4, 2, 0.05, '#9fd3e6').add(wx - 0.15, 6.45, 3.95, 2.7, 0.2, 0.3, '#ffffff');
+   f.add(-7.8, 6.3, 4, 15.6, 0.2, 1, '#8a8a8a');
+   for (let x = -7.8; x <= 7.8; x += 0.8) f.add(x, 6.5, 4.85, 0.12, 1, 0.12, '#2b2b2b');
+   f.add(-7.8, 7.5, 4.85, 15.6, 0.12, 0.12, '#2b2b2b');
+  }
+  mkWall(0, 1, f, new VB().add(-7.8, 0, 3.7, 11.5, 0.9, 0.3, wc).add(5.3, 0, 3.7, 2.5, 0.9, 0.3, wc));
+ }
+ // cartel de pie
+ B.add(-10.3, 0, 6.3, 0.5, 8, 0.5, '#777777').add(-10.8, 0, 5.8, 1.5, 0.4, 1.5, '#666666');
+ B.add(-13.8, 7.9, 6.2, 7.5, 2.8, 0.6, '#2b1d14');
+ if (C.sign === 'neon') { const nc = '#ff4fa3'; B.addE(-13.95, 7.75, 6.1, 7.8, 0.15, 0.8, nc).addE(-13.95, 10.7, 6.1, 7.8, 0.15, 0.8, nc).addE(-13.95, 7.75, 6.1, 0.15, 3.1, 0.8, nc).addE(-6.3, 7.75, 6.1, 0.15, 3.1, 0.8, nc); }
+ if (C.sign === 'marquesina') for (let x = -13.6; x < -6.2; x += 0.62) { B.addE(x, 10.75, 6.35, 0.25, 0.25, 0.25, '#ffe27a').addE(x, 7.6, 6.35, 0.25, 0.25, 0.25, '#ffe27a'); }
+ // faroles
+ for (const lx of [2, -18]) { B.add(lx, 0, 8.1, 0.3, 6, 0.3, '#555555').add(lx, 5.8, 7.3, 0.3, 0.2, 1, '#555555').addE(lx - 0.1, 5.45, 7.1, 0.5, 0.35, 0.5, '#fff2b3'); }
+ // árboles
+ if (has('naranjo')) {
+  B.add(-15.3, 0, 4.7, 0.6, 2.6, 0.6, '#6b4423').add(-16.5, 2.4, 3.5, 3, 2.4, 3, '#3f8f3a').add(-16, 4.7, 4, 2, 0.9, 2, '#4fa34a');
+  for (const [ox, oy, oz] of [[-16.6, 3, 4.6], [-14.4, 3.6, 4], [-15.4, 4.4, 6.1], [-16, 2.7, 6.1], [-14.6, 2.6, 5.6]]) B.add(ox, oy, oz, 0.45, 0.45, 0.45, '#ff8c1a');
+ }
+ if (has('lapacho')) {
+  B.add(14.7, 0, 4.7, 0.6, 3, 0.6, '#5a3a20').add(13.4, 2.8, 3.4, 3.2, 2.2, 3.2, '#e58fb5').add(13.9, 5, 3.9, 2.2, 1, 2.2, '#f2a7c8').add(13, 3.2, 4.2, 0.6, 0.6, 1.6, '#f7c1d9');
+ }
+ if (has('cart')) {
+  B.add(-6.2, 0.5, 4.6, 2.4, 1.3, 1.2, '#f7f7f7').add(-6.2, 1.2, 5.81, 2.4, 0.3, 0.05, '#d7263d').add(-6.2, 1.8, 4.6, 2.4, 0.1, 1.2, '#c9c9c9');
+  B.add(-6, 0, 4.5, 0.6, 0.6, 0.1, '#222222').add(-6, 0, 5.8, 0.6, 0.6, 0.1, '#222222').add(-4.4, 0, 5.1, 0.12, 0.6, 0.12, '#888888');
+  B.add(-5.1, 1.9, 5.15, 0.12, 2.2, 0.12, '#cccccc');
+  for (let i = 0; i < 5; i++) B.add(-6.6 + i * 0.66, 4.05, 4, 0.66, 0.25, 2.4, i % 2 ? '#d7263d' : '#ffffff');
+ }
+ if (has('terraza')) {
+  tableAt(B, 9.6, 5.2, true); tableAt(B, 12.6 - (has('lapacho') ? 0 : 0), 5.2, true);
+  for (const tx of [9.6]) { B.add(tx - 0.08, 1.5, 5.1, 0.16, 2.6, 0.16, '#dddddd'); for (let i = 0; i < 4; i++) B.add(tx - 1.4 + i * 0.7, 4, 3.8, 0.7, 0.22, 2.8, i % 2 ? aw[1] : aw[0]); }
+ }
+ if (has('estatua')) {
+  B.add(-14, 0, -3.5, 2.6, 2.4, 2.6, '#cfcfcf').add(-14.2, 2.4, -3.7, 3, 0.4, 3, '#b8b8b8');
+  B.add(-13.2, 2.8, -2.7, 1, 2.2, 1, '#f5f5f0').add(-13.3, 5, -2.8, 1.2, 1.2, 1.2, '#f5f5f0').add(-13.05, 6.2, -2.55, 0.7, 0.7, 0.7, '#f5f5f0');
+  B.add(-12.15, 5.6, -2.4, 0.35, 2, 0.35, '#f5f5f0').add(-12.25, 7.5, -2.5, 0.55, 0.3, 0.55, '#f5f5f0');
+  B.add(-14.2, 2.4, -0.68, 3, 0.25, 0.05, '#c9a227');
+ }
+ G3.static = B.build(); sc.add(G3.static);
+ const tex = signTexture(), pg = new THREE.PlaneGeometry(7.2, 2.5), mm = new THREE.MeshBasicMaterial({map:tex});
+ const p1 = new THREE.Mesh(pg, mm); p1.position.set(-10.05, 9.3, 6.82); G3.static.add(p1);
+ const p2 = new THREE.Mesh(pg, mm); p2.position.set(-10.05, 9.3, 6.18); p2.rotation.y = Math.PI; G3.static.add(p2);
+ if (has('moto')) {
+  const m = new VB().add(-0.9, 0.6, -0.3, 1.8, 0.6, 0.6, '#d7263d').add(-1.2, 0, -0.25, 0.6, 0.6, 0.5, '#222222').add(0.6, 0, -0.25, 0.6, 0.6, 0.5, '#222222')
+   .add(-0.6, 1.2, -0.25, 0.9, 0.2, 0.5, '#222222').add(-1.4, 1.1, -0.35, 0.8, 0.8, 0.7, '#ff8c1a').add(0.8, 1.2, -0.05, 0.12, 0.9, 0.1, '#888888').add(0.6, 2, -0.45, 0.12, 0.12, 0.9, '#888888').build();
+  m.position.set(11, 0, 9.6); G3.moto = m; sc.add(m);
+ }
+ // comida en el mostrador
+ G3.foodGroup = new THREE.Group(); sc.add(G3.foodGroup);
+ PKEYS.forEach((k, j) => {
+  G3.foods[k] = [];
+  for (let n = 0; n < STOCK_MAX; n++) {
+   const P = PRODUCTS[k], g = new VB().add(-0.22, 0, -0.22, 0.44, 0.12, 0.44, P.col).add(-0.2, 0.12, -0.2, 0.4, 0.14, 0.4, P.col2).add(-0.22, 0.26, -0.22, 0.44, 0.1, 0.44, P.col).build();
+   g.position.set(-6.7 + j * 2.15 + (n % 3) * 0.55, 2.15, -1.8 + Math.floor(n / 3) * 0.55); g.visible = false;
+   G3.foodGroup.add(g); G3.foods[k].push(g);
+  }
+ });
+ // personal
+ const uni = UNIFORMS[C.uniform];
+ G3.staffMeshes.chef = person({shirt:uni, pants:'#333333', hair:'#4a2c1a', skin:'#d9a37a', hat:true}); G3.staffMeshes.chef.position.set(-5, 0, -3.6); G3.staffMeshes.chef.rotation.y = Math.PI;
+ if (S.staff.parrillero) { G3.staffMeshes.parri = person({shirt:uni, pants:'#333333', hair:'#1a1a1a', skin:'#b07a52', hat:true}); G3.staffMeshes.parri.position.set(0.8, 0, -3.6); G3.staffMeshes.parri.rotation.y = Math.PI; }
+ if (S.staff.cajero) { G3.staffMeshes.caja = person({shirt:uni, pants:'#333333', hair:'#c98b3a', skin:'#f2c19d'}); G3.staffMeshes.caja.position.set(3.5, 0, -2.9); }
+ if (has('cart')) { G3.staffMeshes.achi = person({shirt:'#ffffff', pants:'#3b5ba5', hair:'#1a1a1a', skin:'#b07a52', hat:true}); G3.staffMeshes.achi.position.set(-5, 0, 4.0); }
+ for (const k in G3.staffMeshes) sc.add(G3.staffMeshes[k]);
+ for (let i = 0; i < 8; i++) { const s = new THREE.Mesh(G3.unit, mat('#d0d0d0')); s.visible = false; s.scale.setScalar(0.35); sc.add(s); G3.smoke.push(s); }
+ for (const id in G3.people) { const p = G3.people[id]; if (p.state === 'sit' || p.state === 'toseat') { p.g.position.y = 0; p.state = 'go'; p.path = exitPath(p, false); } }
+ G3.dirty = false;
+}
+function person(o) {
+ const g = new THREE.Group();
+ const add = (w, h, d, x, y, z, c, parent) => { const m = new THREE.Mesh(G3.unit, mat(c)); m.scale.set(w, h, d); m.position.set(x, y, z); (parent || g).add(m); return m; };
+ const legL = new THREE.Group(), legR = new THREE.Group(); legL.position.set(-0.27, 1.4, 0); legR.position.set(0.27, 1.4, 0);
+ add(0.46, 1.4, 0.5, 0, -0.7, 0, o.pants, legL); add(0.46, 1.4, 0.5, 0, -0.7, 0, o.pants, legR); g.add(legL); g.add(legR);
+ add(1.2, 1.35, 0.72, 0, 2.07, 0, o.shirt);
+ add(0.34, 1.1, 0.42, -0.78, 2.15, 0, o.shirt); add(0.34, 1.1, 0.42, 0.78, 2.15, 0, o.shirt);
+ add(0.92, 0.92, 0.92, 0, 3.2, 0, o.skin);
+ add(0.98, 0.3, 0.98, 0, 3.68, 0, o.hair); add(0.98, 0.6, 0.26, 0, 3.4, -0.38, o.hair);
+ add(0.14, 0.16, 0.05, -0.2, 3.25, 0.47, '#1a1a1a'); add(0.14, 0.16, 0.05, 0.2, 3.25, 0.47, '#1a1a1a');
+ if (o.hat) { add(0.9, 0.5, 0.9, 0, 4.02, 0, '#ffffff'); add(1.05, 0.15, 1.05, 0, 3.8, 0, '#ffffff'); }
+ g.userData = {legL, legR};
+ g.scale.setScalar(0.82);
+ return g;
+}
+function slotPos(i) { return i < 8 ? {x:-5.4 + i * 1.6, z:0.35} : {x:5.8 - (i - 8) * 1.6, z:1.45}; }
+function exitPath(p, angry) {
+ const pth = [];
+ if (p.g.position.z > 3.7) pth.push({x:4.5, z:7.3}); else { pth.push({x:p.g.position.x, z:1.2}, {x:4.5, z:1.2}, {x:4.5, z:7.3}); }
+ pth.push({x:angry ? 22 : -22, z:7.3});
+ return pth;
+}
+function sync3D() {
+ const live = new Set(); let qi = 0;
+ for (const c of S.q) {
+  if (c.del) continue;
+  live.add(c.id); const sl = slotPos(qi++);
+  let p = G3.people[c.id];
+  if (!p) {
+   const g = person({shirt:SHIRTS[c.v[0]], hair:HAIRS[c.v[1]], skin:SKINS[c.v[2]], pants:PANTS[c.v[3] || 0]});
+   g.position.set(13, 0, 7.3); G3.scene.add(g);
+   p = G3.people[c.id] = {g, state:'queue', path:[{x:4.5, z:7.3}, {x:4.5, z:1.2}, {x:sl.x, z:1.2}, {x:sl.x, z:sl.z}], slot:sl, speed:6};
+  } else if (p.state === 'queue' && (p.slot.x !== sl.x || p.slot.z !== sl.z)) {
+   p.slot = sl; if (!p.path.length || p.path.length === 1) p.path = [{x:sl.x, z:sl.z}];
+  }
+ }
+ for (const id in G3.people) {
+  const p = G3.people[id];
+  if (p.state !== 'queue' || live.has(+id)) continue;
+  const how = G3.leave[id] || 'happy'; delete G3.leave[id];
+  if (how === 'angry') { p.state = 'go'; p.speed = 6.5; p.path = exitPath(p, true); continue; }
+  const free = G3.seats.findIndex((s, i) => !G3.seatUsed[i]);
+  if (free >= 0 && Math.random() < 0.8) {
+   const s = G3.seats[free]; G3.seatUsed[free] = id; p.seat = free;
+   p.state = 'toseat'; p.path = s.out ? [{x:p.g.position.x, z:1.2}, {x:4.5, z:1.2}, {x:4.5, z:7.3}, {x:s.x, z:7.3}, {x:s.x, z:s.z}] : [{x:p.g.position.x, z:1.2}, {x:s.x, z:1.2}, {x:s.x, z:s.z}];
+  } else { p.state = 'go'; p.path = exitPath(p, false); }
+ }
+}
+function update3D(dt, t) {
+ for (const id in G3.people) {
+  const p = G3.people[id], g = g3pos(p);
+  if (p.state === 'sit') {
+   p.timer -= dt;
+   if (p.timer <= 0) { delete G3.seatUsed[p.seat]; p.g.position.y = 0; p.state = 'go'; p.path = exitPath(p, false); }
+   continue;
+  }
+  if (p.path.length) {
+   const w = p.path[0], dx = w.x - g.x, dz = w.z - g.z, d = Math.hypot(dx, dz), step = p.speed * dt;
+   if (d <= step) { g.x = w.x; g.z = w.z; p.path.shift(); } else { g.x += dx / d * step; g.z += dz / d * step; }
+   if (d > 0.01) p.g.rotation.y = Math.atan2(dx, dz);
+   const sw = Math.sin(t * 12) * 0.6; p.g.userData.legL.rotation.x = sw; p.g.userData.legR.rotation.x = -sw;
+  } else {
+   p.g.userData.legL.rotation.x = p.g.userData.legR.rotation.x = 0;
+   if (p.state === 'queue') p.g.rotation.y = Math.PI;
+   if (p.state === 'toseat') { const s = G3.seats[p.seat]; p.state = 'sit'; p.timer = 7 + Math.random() * 5; p.g.rotation.y = s.rot; p.g.position.y = -0.45; }
+   if (p.state === 'go') { G3.scene.remove(p.g); delete G3.people[id]; }
+  }
+ }
+ // personal
+ const cooking = k => S.p[k].cooking.length > 0;
+ const bob = (m, on, ph) => { if (m) m.position.y = on ? Math.abs(Math.sin(t * 8 + ph)) * 0.18 : 0; };
+ bob(G3.staffMeshes.chef, cooking('burger') || cooking('papas') || cooking('lomito') || cooking('mila'), 0);
+ bob(G3.staffMeshes.parri, cooking('chori') || cooking('empanada'), 1);
+ bob(G3.staffMeshes.caja, S.q.some(canServe), 2);
+ if (G3.staffMeshes.achi) { G3.achiPop = Math.max(0, G3.achiPop - dt); G3.staffMeshes.achi.position.y = G3.achiPop > 0 ? Math.sin(G3.achiPop * 15) * 0.3 + 0.3 : 0; }
+ // comida
+ PKEYS.forEach(k => G3.foods[k] && G3.foods[k].forEach((m, n) => m.visible = n < S.p[k].stock));
+ // humo de parrilla / horno
+ const smokeOn = cooking('chori') || cooking('empanada');
+ G3.smoke.forEach((s, i) => {
+  if (!smokeOn && !s.visible) return;
+  if (!s.visible || s.position.y > 6) { if (!smokeOn) { s.visible = false; return; } s.visible = true; const src = (i % 2 && S.p.empanada.unlocked) ? 3.8 : 0.7; s.position.set(src + (Math.random() - 0.5), 1.6 + Math.random(), -4.8 + (Math.random() - 0.5) * 0.6); }
+  s.position.y += dt * 1.6; s.position.x += Math.sin(t * 2 + i) * dt * 0.3;
+ });
+ // moto de delivery
+ if (G3.moto) {
+  if (G3.motoTrip > 0) { G3.motoTrip += dt; const k = G3.motoTrip; G3.moto.position.x = k < 2.5 ? 11 + (k * k) * 4 : k < 5 ? 36 - (k - 2.5) * 10 : 11; if (k >= 5) { G3.motoTrip = 0; G3.moto.position.x = 11; } }
+ }
+ G3.clouds.forEach((c, i) => { c.position.x += dt * (0.6 + i * 0.15); if (c.position.x > 60) c.position.x = -60; });
+}
+const g3pos = p => p.g.position;
+const SKY = [[11,'#8fd3ff'],[17,'#9fd8ff'],[19.3,'#ffb37a'],[20.8,'#5a4a8a'],[22,'#232048'],[25,'#141228']];
+function dayLight() {
+ const h = hourOf(); let c = new THREE.Color(SKY[0][1]);
+ for (let i = 0; i < SKY.length - 1; i++) if (h >= SKY[i][0] && h <= SKY[i + 1][0]) { const f = (h - SKY[i][0]) / (SKY[i + 1][0] - SKY[i][0]); c = new THREE.Color(SKY[i][1]).lerp(new THREE.Color(SKY[i + 1][1]), f); }
+ const evid = S.ev && S.ev.id;
+ if (evid === 'lluvia' || evid === 'quema') c.lerp(new THREE.Color('#8a8a8a'), 0.55);
+ G3.scene.background = c;
+ const night = clamp((h - 19) / 2.5, 0, 1);
+ G3.sun.intensity = 0.8 - 0.6 * night; G3.hemi.intensity = 0.75 - 0.35 * night;
+ G3.sun.color.set(night > 0.1 && night < 0.6 ? '#ffc890' : '#ffffff');
+ const ei = evid === 'luz' ? 0 : 0.35 + 1.1 * night;
+ G3.emis.forEach(m => m.emissiveIntensity = ei);
+}
+let last3 = performance.now();
+function loop3(now) {
+ requestAnimationFrame(loop3);
+ const dt = Math.min(0.1, (now - last3) / 1000); last3 = now;
+ if (!G3.ok || !S || S.gfx === 'off' || document.hidden) return;
+ const host = G3.canvas.parentElement; if (!host || !host.isConnected) return;
+ if (G3.dirty) build3D();
+ const w = host.clientWidth, h = host.clientHeight; if (!w || !h) return;
+ if (G3.resized || G3.w !== w || G3.h !== h) {
+  G3.w = w; G3.h = h; G3.resized = false;
+  G3.r.setPixelRatio(S.gfx === 'pixel' ? 0.5 : Math.min(window.devicePixelRatio || 1, 2));
+  G3.r.setSize(w, h, false);
+ }
+ const asp = w / h, vs = Math.max(25 / asp, 15) / G3.zoom;
+ const cam = G3.cam; cam.left = -vs * asp / 2; cam.right = vs * asp / 2; cam.top = vs / 2; cam.bottom = -vs / 2; cam.updateProjectionMatrix();
+ const R = 60, tx = 0, ty = 1.5, tz = 0.5;
+ cam.position.set(tx + R * Math.sin(G3.theta) * Math.cos(G3.phi), ty + R * Math.sin(G3.phi), tz + R * Math.cos(G3.theta) * Math.cos(G3.phi));
+ cam.lookAt(tx, ty, tz);
+ const dx = Math.sin(G3.theta), dz = Math.cos(G3.theta);
+ G3.walls.forEach(wl => { const up = wl.nx * dx + wl.nz * dz < 0.15; wl.full.visible = up; wl.stub.visible = !up; });
+ sync3D();
+ if (!paused) update3D(dt * S.speed, now / 1000);
+ dayLight();
+ G3.r.render(G3.scene, cam);
+}
+function mount3D(sel) {
+ const host = $(sel); if (!host) return;
+ if (S.gfx === 'off') return;
+ init3D();
+ if (G3.failed) { if (!host.querySelector('.msg')) host.insertAdjacentHTML('beforeend', '<div class="msg">No se pudo cargar el 3D en este dispositivo. El juego funciona igual.</div>'); return; }
+ if (G3.canvas.parentElement !== host) { host.prepend(G3.canvas); G3.resized = true; }
+}
+const v3dHTML = (id, big) => S.gfx === 'off' ? '' : `<div class="v3d ${big ? 'big' : ''}" id="${id}"><div class="lbl">Arrastrá para girar</div><div class="ctl"><button class="hbtn" data-act="rot" data-arg="0.5">⟲</button><button class="hbtn" data-act="rot" data-arg="-0.5">⟳</button><button class="hbtn" data-act="zoom" data-arg="0.85">-</button><button class="hbtn" data-act="zoom" data-arg="1.18">+</button></div></div>`;
+
+/* ================= RENDER ================= */
+function setKey(el, key, fn) { if (el && el._k !== key) { el._k = key; el.innerHTML = fn(); } }
+const pips = (lv, max) => `<div class="pips">${Array.from({length:max}, (_, i) => `<span class="${i < lv ? 'on' : ''}"></span>`).join('')}</div>`;
+const costBtn = (act, arg, cost, label, cls = '') => `<button class="btn ${cls}" data-act="${act}" data-arg="${arg}" data-cost="${cost}">${label || money(cost)}</button>`;
+const ratioCls = r => r < 0.92 ? 'cheap' : r <= 1.15 ? 'fair' : 'exp';
+const ratioTxt = r => r < 0.92 ? 'barato' : r <= 1.15 ? 'justo' : 'caro';
+
+function renderHUD() {
+ $('#h-name').textContent = S.name;
+ const m = $('#h-money'); m.textContent = money(S.money); m.classList.toggle('neg', S.money < 0);
+ $('#h-speed').textContent = 'x' + S.speed; $('#h-speed').classList.toggle('on', S.speed > 1);
+ $('#h-rep').innerHTML = stars(S.rep);
+ $('#h-day').textContent = 'Día ' + S.day + ' · ' + clock();
+ $('#h-inf').textContent = 'IPC ' + pct(S.inf) + '/mes';
+ $('#h-extra').textContent = S.phase >= 2 ? 'Cadena ' + money(chainProfit()) + '/día' : 'Blue ' + money(blue());
+ $('#h-dayb').style.width = (S.dayT / DAY_SEC * 100) + '%';
+}
+function renderBanner() {
+ const b = $('#banner');
+ if (!S.ev) { setKey(b, 'none', () => ''); return; }
+ const e = EVMAP[S.ev.id];
+ setKey(b, 'ev' + S.ev.id + S.ev.msg, () => `<div class="event"><b>${e.title}</b>${esc(S.ev.msg || '')}<div class="tbar"><i id="evbar"></i></div></div>`);
+ const bar = $('#evbar'); if (bar) bar.style.width = (S.ev.t / S.ev.dur * 100) + '%';
+}
+function renderTabs() {
+ const tabs = [['cocina','burger','Cocina'],['precios','coin','Precios'],['mejoras','arrow','Mejoras'],['local','brush','Local']];
+ if (S.phase >= 2) tabs.push(['cadena','store','Cadena']);
+ tabs.push(['banco','bill','Banco']);
+ setKey($('#tabs'), tab + S.phase, () => tabs.map(([id, s, l]) => `<button class="tb ${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${img(s, 22)}${l}</button>`).join(''));
+}
+function custHTML(c) {
+ const pic = c.del ? img('moto', 40) : img('person', 40, {T:SHIRTS[c.v[0]], h:HAIRS[c.v[1]], f:SKINS[c.v[2]], J:PANTS[c.v[3] || 0]});
+ return `<div class="cust ${c.del ? 'del' : ''}" id="c${c.id}" data-fast="serve" data-arg="${c.id}">${pic}
+  <div class="cname">${esc(c.name)}</div><div class="bub">«${esc(c.say || '')}»</div>
+  <div class="corder">${c.order.map(k => img(PRODUCTS[k].spr, 22)).join('')}</div>
+  <div class="pbar"><i></i></div></div>`;
+}
+function stationHTML(k, i) {
+ const p = S.p[k], P = PRODUCTS[k];
+ if (!p.unlocked) return `<div class="station locked">${img(P.spr, 44)}<div class="sname">${P.name}</div><div class="scost">Desbloqueá en Mejoras</div></div>`;
+ return `<div class="station" id="st-${k}" data-fast="cook" data-arg="${k}">${img(P.spr, 44)}
+  <div class="sname">${P.name}</div>
+  <div class="sstock">Listos: <b id="ss-${k}">0</b>/${STOCK_MAX}</div>
+  <div class="slots" id="sl-${k}">${'<div class="slot"><i></i></div>'.repeat(slots())}</div>
+  <div class="scost" id="sc-${k}"></div><div class="scost">[${i + 1}]</div></div>`;
+}
+function vCocina(v) {
+ setKey(v, 'cocina' + S.gfx, () => `${v3dHTML('v3d-c')}<div id="tut"></div><div class="grid2">
+  <section class="panel"><h2>Salón <small id="qinfo"></small></h2><div id="queue" class="queue"></div></section>
+  <section class="panel"><h2>Cocina <small id="kinfo"></small></h2><div id="stations" class="stations"></div><div id="staffline" class="note"></div></section>
+  </div><div id="goals"></div>`);
+ mount3D('#v3d-c');
+ setKey($('#tut'), 't' + (S.stats.served < 3 ? 1 : 0), () => S.stats.served < 3 ? `<section class="panel hint">
+  <b>Cómo se juega:</b> tocá una estación de la cocina para preparar comida (pagás los insumos). Cuando un cliente se pone verde, tocalo para cobrarle. Si espera demasiado, se va enojado y baja tu reputación. Arriba ves tu local en 3D: arrastrá para girarlo.</section>` : '');
+ const nq = S.q.filter(c => !c.del).length, nd = S.q.length - nq;
+ $('#qinfo').textContent = nq + '/' + qcap() + (nd ? ' · delivery ' + nd : '');
+ $('#kinfo').textContent = 'Insumos ×' + (S.I).toFixed(2).replace('.', ',');
+ const order = [...S.q].sort((a, b) => (b.del ? 1 : 0) - (a.del ? 1 : 0));
+ setKey($('#queue'), order.map(c => c.id).join(',') || 'empty', () => order.length ? order.map(custHTML).join('') : `<div class="empty">Esperando clientes…</div>`);
+ S.q.forEach(c => {
+  const el = document.getElementById('c' + c.id); if (!el) return;
+  const f = c.pat / c.max, b = el.querySelector('.pbar i');
+  b.style.width = (f * 100) + '%'; b.style.background = f > 0.5 ? '#2e9e44' : f > 0.25 ? '#e0a800' : '#d7263d';
+  el.classList.toggle('ready', canServe(c));
+ });
+ setKey($('#stations'), PKEYS.map(k => S.p[k].unlocked ? 1 : 0).join('') + ':' + slots(), () => PKEYS.map(stationHTML).join(''));
+ const off = !!evP('noCook');
+ PKEYS.forEach(k => {
+  const p = S.p[k]; if (!p.unlocked) return;
+  $('#ss-' + k).textContent = p.stock;
+  document.querySelectorAll('#sl-' + k + ' i').forEach((i, n) => { const c = p.cooking[n]; i.style.width = c ? ((1 - c.t / c.total) * 100) + '%' : '0%'; });
+  $('#sc-' + k).textContent = 'Insumos ' + money(unitCost(k));
+  $('#st-' + k).classList.toggle('off', off);
+ });
+ const st = Object.keys(STAFF).filter(k => S.staff[k]).map(k => STAFF[k].name + ' nv' + S.staff[k]);
+ $('#staffline').textContent = st.length ? 'Equipo: ' + st.join(' · ') : 'Por ahora estás solo en el local. Contratá gente en Mejoras.';
+ const gs = goals();
+ setKey($('#goals'), S.phase + gs.map(g => g[1] ? 1 : 0).join('') + decoPts() + Math.round(S.I * 50), () => S.phase >= 2 ? '' : `<section class="panel"><h2>Camino a la franquicia</h2>
+  ${gs.map(g => `<div class="goal ${g[1] ? 'ok' : ''}">${g[1] ? '■' : '□'} ${g[0]}</div>`).join('')}
+  ${gs.every(g => g[1]) ? '<button class="btn big g" data-act="found">Fundar la cadena</button>' : '<div class="note">Cuando cumplas todo, el local se te queda chico y pasás a manejar una cadena de sucursales.</div>'}</section>`);
+}
+function vPrecios(v) {
+ const un = PKEYS.filter(k => S.p[k].unlocked);
+ setKey(v, 'precios' + un.join() + S.staff.contador, () => `<section class="panel"><h2>Lista de precios</h2>
+  <div class="note" style="margin-top:0">La inflación sube el precio de mercado todos los días. Si no remarcás, vendés barato y perdés margen; si te pasás, los clientes se van al de enfrente y baja tu reputación.</div>
+  <div style="display:flex;gap:6px;margin:10px 0"><button class="btn g" style="flex:1" data-act="remarcar">Remarcar por inflación</button><button class="btn b" style="flex:1" data-act="igualar">Igualar al mercado</button></div>
+  ${S.staff.contador ? '<div class="note">Tu contador remarca todo al cierre de cada día, respetando tu margen.</div>' : ''}
+  ${un.map(k => `<div class="prow"><div class="top">${img(PRODUCTS[k].spr, 36)}<div class="nums"><b class="pf" style="font-size:9px">${PRODUCTS[k].name}</b><br>
+   Tu precio <b id="pp-${k}"></b> · Mercado <span id="pm-${k}"></span><br><span id="pr-${k}"></span> · Costo <span id="pc-${k}"></span> · Margen <span id="pg-${k}"></span></div></div>
+   <div class="btns"><button class="btn sm b" data-act="price" data-arg="${k}:0.9">-10%</button><button class="btn sm b" data-act="price" data-arg="${k}:0.95">-5%</button><button class="btn sm" data-act="price" data-arg="${k}:1.05">+5%</button><button class="btn sm" data-act="price" data-arg="${k}:1.1">+10%</button></div></div>`).join('')}
+  </section>`);
+ un.forEach(k => {
+  const p = S.p[k], r = p.price / mkt(k), c = unitCost(k);
+  $('#pp-' + k).textContent = money(p.price); $('#pm-' + k).textContent = money(mkt(k));
+  const pr = $('#pr-' + k); pr.className = ratioCls(r); pr.textContent = Math.round(r * 100) + '% (' + ratioTxt(r) + ')';
+  $('#pc-' + k).textContent = money(c); $('#pg-' + k).textContent = Math.round((1 - c / p.price) * 100) + '%';
+ });
+}
+function itemHTML(icon, name, desc, lv, max, act, arg, cost, cls = '') {
+ return `<div class="item ${cls}">${icon}<div class="info"><div class="t">${name}</div><div class="d">${desc}</div>${max > 1 ? pips(lv, max) : ''}</div>
+  ${lv >= max ? '<span class="badge gr">LISTO</span>' : costBtn(act, arg, cost)}</div>`;
+}
+function vMejoras(v) {
+ const key = 'mej' + JSON.stringify([S.upg, S.staff, PKEYS.map(k => S.p[k].unlocked)]) + Math.round(S.I * 50);
+ setKey(v, key, () => `<section class="panel"><h2>Menú</h2>
+  ${PKEYS.filter(k => k !== 'burger').map(k => itemHTML(img(PRODUCTS[k].spr, 32), PRODUCTS[k].name, 'Precio de mercado ' + money(mkt(k)) + (k === 'empanada' ? '. Incluye el horno de barro' : k === 'chori' ? '. Incluye la parrilla' : ''), S.p[k].unlocked ? 1 : 0, 1, 'buy', 'menu:' + k, PRODUCTS[k].unlock * S.I)).join('')}
+  </section><section class="panel"><h2>Equipamiento</h2>
+  ${Object.keys(UPG).map(k => itemHTML(img('arrow', 24), UPG[k].name, UPG[k].desc, S.upg[k], UPG[k].costs.length, 'buy', 'upg:' + k, (UPG[k].costs[S.upg[k]] || 0) * S.I)).join('')}
+  </section><section class="panel"><h2>Personal</h2>
+  ${Object.keys(STAFF).map(k => itemHTML(img('chef', 24), STAFF[k].name + (S.staff[k] ? ' nv' + S.staff[k] : ''), STAFF[k].desc + '. Sueldo ' + money(STAFF[k].wage * S.I) + '/día por nivel', S.staff[k], STAFF[k].costs.length, 'buy', 'staff:' + k, (STAFF[k].costs[S.staff[k]] || 0) * S.I)).join('')}
+  <div class="note">Sueldos y alquiler se pagan al cierre de cada día y suben con la inflación.</div></section>`);
+}
+function vLocal(v) {
+ const C = S.cos;
+ setKey(v, 'local' + S.gfx, () => `${v3dHTML('v3d-l', true)}<section class="panel"><h2>Nombre del local</h2><div style="display:flex;gap:6px;align-items:stretch"><input id="rn" maxlength="22" value="${esc(S.name)}"><button class="btn" data-act="rename">OK</button></div></section><div id="loc"></div>`);
+ mount3D('#v3d-l');
+ const key = JSON.stringify(C) + S.name + Math.round(S.I * 50);
+ const chips = (k, obj, sw) => `<div class="chips">${Object.keys(obj).map(v => `<div class="chip ${C[k] === v ? 'on' : ''}" data-act="cos" data-arg="${k}:${v}">${sw(obj[v])}${v}</div>`).join('')}</div>`;
+ const own = (k, objKey, obj, act) => Object.keys(obj).map(v => {
+  const o = obj[v], owned = C[objKey][v], on = C[k] === v;
+  return `<div class="item"><div class="info"><div class="t">${o.name}</div><div class="d">Decoración +${o.deco}</div></div>${on ? '<span class="badge gr">EN USO</span>' : owned ? `<button class="btn b" data-act="buy" data-arg="${act}:${v}">Usar</button>` : costBtn('buy', act + ':' + v, o.cost * S.I)}</div>`;
+ }).join('');
+ setKey($('#loc'), key, () => `<section class="panel"><h2>Tu local <small>Decoración ${decoPts()}</small></h2>
+  <div class="note" style="margin-top:0">Cada punto de decoración trae más clientes y los hace esperar más (hasta +50% de paciencia).</div>
+  <h3>Paredes</h3>${chips('wall', WALLS, c => `<span class="sw" style="background:${c}"></span>`)}
+  <h3>Toldo y cartel</h3>${chips('awning', AWNINGS, c => `<span class="sw" style="display:flex;padding:0"><span class="sw2" style="background:${c[0]}"></span><span class="sw2" style="background:${c[1]}"></span></span>`)}
+  <h3>Uniforme</h3>${chips('uniform', UNIFORMS, c => `<span class="sw" style="background:${c}"></span>`)}
+  </section>
+  <section class="panel"><h2>Piso</h2>${own('floor', 'floors', FLOORS, 'floor')}</section>
+  <section class="panel"><h2>Cartel</h2>${own('sign', 'signs', SIGNS, 'signs')}</section>
+  <section class="panel"><h2>Decoración</h2>${Object.keys(ITEMS).filter(k => !ITEMS[k].big).map(k => itemHTML(img('brush', 22), ITEMS[k].name, ITEMS[k].desc + ' · Decoración +' + ITEMS[k].deco, has(k) ? 1 : 0, 1, 'buy', 'item:' + k, ITEMS[k].cost * S.I)).join('')}</section>
+  <section class="panel"><h2>Compras grandes</h2>${Object.keys(ITEMS).filter(k => ITEMS[k].big).map(k => itemHTML(img(k === 'cart' ? 'achilata' : k === 'moto' ? 'moto' : 'store', 30), ITEMS[k].name, ITEMS[k].desc + ' · Decoración +' + ITEMS[k].deco, has(k) ? 1 : 0, 1, 'buy', 'item:' + k, ITEMS[k].cost * S.I, 'bigitem')).join('')}</section>`);
+}
+function branchHTML(id) {
+ const c = CITY[id], b = S.br[id], I = S.I;
+ if (!b) {
+  const locked = S.corp.logistica < c.log;
+  const wl = c.wealth >= 1.3 ? 'muy alto' : c.wealth >= 1.05 ? 'alto' : c.wealth >= 0.95 ? 'medio' : 'bajo';
+  return `<div class="city ${locked ? 'locked' : ''}"><div class="head">${img('store', 56, {R:'#888', c:'#555'})}<div><div class="nm">${c.name}</div><div class="d">${c.prov} · se alquila</div></div></div>
+   <div class="stats">Mercado: ${c.market} clientes/día · Poder adquisitivo ${wl} · Alquiler ${money(c.rent * I)}/día${c.note ? '<br><i>' + c.note + '</i>' : ''}</div>
+   ${locked ? `<span class="badge r">Requiere Logística nv${c.log}</span>` : costBtn('open', id, c.cost * I, 'Abrir sucursal · ' + money(c.cost * I), 'g')}</div>`;
+ }
+ const mg = ['Sin encargado', 'Encargado', 'Encargado estrella'][b.mgr];
+ return `<div class="city"><div class="head">${img('store', 56)}<div style="flex:1"><div class="nm">${c.name} <span id="bb-${id}"></span></div><div class="d">${c.prov} · ${mg}</div></div></div>
+  <div class="stats" id="bs-${id}"></div>
+  <div class="ctr">
+   <button class="btn b sm" data-act="bpol" data-arg="${id}">Precios: ${POLICY[b.policy]}</button>
+   ${b.staff < 4 ? costBtn('bstaff', id, 1.2e6 * b.staff * I, 'Personal nv' + (b.staff + 1) + ' · ' + money(1.2e6 * b.staff * I), 'sm') : '<span class="badge gr">Personal al máximo</span>'}
+   ${b.mgr === 0 ? costBtn('bmgr', id, 1e6 * I, 'Encargado · ' + money(1e6 * I), 'sm') : b.mgr === 1 ? (S.corp.escuela ? costBtn('bmgr2', id, 4e6 * I, 'Estrella · ' + money(4e6 * I), 'sm y') : '<span class="badge">Estrella: requiere Escuela</span>') : '<span class="badge gr">Encargado estrella</span>'}
+   ${b.mkt < 3 ? costBtn('bmkt', id, 0.8e6 * (b.mkt + 1) * I, 'Marketing nv' + (b.mkt + 1) + ' · ' + money(0.8e6 * (b.mkt + 1) * I), 'sm') : '<span class="badge gr">Marketing al máximo</span>'}
+  </div></div>`;
+}
+function vCadena(v) {
+ const n = Object.keys(S.br).length, ipoOk = n >= IPO_BRANCHES && S.corp.marca >= 3;
+ const key = 'cad' + JSON.stringify([S.br, S.corp, S.won]) + Math.round(S.I * 50);
+ setKey(v, key, () => `<section class="panel"><h2>Tu cadena <small id="cinfo"></small></h2>
+  <div class="kv"><span>Ganancia de la cadena</span><b id="cprof"></b></div>
+  <div class="kv"><span>Lista de precios vs. inflación</span><b id="clist"></b></div>
+  ${S.corp.contador ? '<div class="note">El estudio contable actualiza la lista todos los días.</div>' : '<button class="btn big" data-act="list">Actualizar lista de precios</button><div class="note">Si la lista queda atrasada, vendés más pero con menos margen.</div>'}
+  </section><section class="panel"><h2>Oficina corporativa</h2>
+  ${Object.keys(CORP).map(k => itemHTML(img('tower', 22), CORP[k].name, CORP[k].desc, S.corp[k], CORP[k].costs.length, 'buy', 'corp:' + k, (CORP[k].costs[S.corp[k]] || 0) * S.I)).join('')}
+  </section><section class="panel"><h2>Sucursales</h2>
+  <div class="city"><div class="head">${img('store', 56)}<div><div class="nm">${esc(S.name)} <span class="badge">Casa central</span></div><div class="d">San Miguel de Tucumán · la atendés vos</div></div></div></div>
+  ${CITIES.map(c => branchHTML(c.id)).join('')}</section>
+  <section class="panel"><h2>Salir a la bolsa</h2>
+  <div class="goal ${n >= IPO_BRANCHES ? 'ok' : ''}">${n >= IPO_BRANCHES ? '■' : '□'} ${IPO_BRANCHES} sucursales o más (${n})</div>
+  <div class="goal ${S.corp.marca >= 3 ? 'ok' : ''}">${S.corp.marca >= 3 ? '■' : '□'} Campaña nacional nivel 3</div>
+  ${S.won ? '<span class="badge gr">Ya cotizás en la bolsa</span>' : ipoOk ? costBtn('ipo', '', IPO_COST * S.I, 'Tocar la campana · ' + money(IPO_COST * S.I), 'big y') : '<div class="note">El final del juego: convertí tu cadena en una empresa que cotiza en la Bolsa de Comercio.</div>'}
+  </section>`);
+ $('#cinfo').textContent = n + '/' + CITIES.length;
+ const cp = chainProfit(), cpe = $('#cprof'); cpe.textContent = money(cp) + '/día'; cpe.className = cp >= 0 ? 'fair' : 'exp';
+ const lag = S.list / S.I - 1, cl = $('#clist'); cl.textContent = (lag >= 0 ? '+' : '') + pct(lag); cl.className = lag < -0.08 ? 'exp' : lag < -0.03 ? 'cheap' : 'fair';
+ for (const id in S.br) {
+  const r = bCalc(id), b = S.br[id], el = $('#bs-' + id); if (!el) continue;
+  el.innerHTML = `Ventas ${Math.round(r.sales)}/día · Demanda ${Math.round(r.demand)} · Capacidad ${Math.round(r.cap)}<br>
+   Satisfacción ${Math.round(b.rep * 100)}% · Ganancia <b class="${r.profit >= 0 ? 'fair' : 'exp'}">${money(r.profit)}/día</b>`;
+  $('#bb-' + id).innerHTML = r.closed ? '<span class="badge r">CERRADA</span>' : b.boostT > 0 ? '<span class="badge gr">EN AUGE</span>' : '';
+ }
+}
+function vBanco(v) {
+ const nach = Object.keys(S.ach).length;
+ setKey(v, 'banco' + S.log.length + (S.log[0] || '') + nach, () => `<section class="panel"><h2>Dólar blue</h2>
+  <div class="note" style="margin-top:0">Los pesos pierden valor con la inflación; los dólares no. Comprá cuando te sobre plata y vendé cuando necesites invertir. Ojo con la diferencia entre compra y venta.</div>
+  <div class="kv"><span>Compra / Venta</span><b id="bk-rate"></b></div>
+  <div class="kv"><span>Tus dólares</span><b id="bk-usd"></b></div>
+  <div class="kv"><span>Valen</span><b id="bk-val"></b></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+   <button class="btn g sm" data-act="usdbuy" data-arg="100">Comprar 100</button><button class="btn g sm" data-act="usdbuy" data-arg="1000">Comprar 1000</button><button class="btn g sm" data-act="usdbuy" data-arg="all">Comprar todo</button>
+   <button class="btn sm" data-act="usdsell" data-arg="100">Vender 100</button><button class="btn sm" data-act="usdsell" data-arg="1000">Vender 1000</button><button class="btn sm" data-act="usdsell" data-arg="all">Vender todo</button>
+  </div></section>
+  <section class="panel"><h2>Economía</h2>
+  <div class="kv"><span>Inflación mensual</span><b id="bk-inf"></b></div>
+  <div class="kv"><span>Inflación acumulada</span><b id="bk-acc"></b></div>
+  <div class="kv"><span>Clientes atendidos / perdidos</span><b id="bk-cl"></b></div>
+  <div class="kv"><span>Se fueron por caro / salón lleno</span><b id="bk-ex"></b></div>
+  <div class="kv"><span>Achilatas / deliveries</span><b id="bk-ad"></b></div>
+  <h3>Noticias</h3><div class="log">${S.log.length ? S.log.map(l => `<div>${esc(l)}</div>`).join('') : '<div>Sin novedades todavía.</div>'}</div>
+  </section><section class="panel"><h2>Logros <small>${nach}/${ACH.length}</small></h2>
+  ${ACH.map(a => `<div class="ach ${S.ach[a.id] ? 'ok' : ''}"><span class="ic"></span><div><b>${a.name}</b><br>${a.desc}${a.rew ? ' · premio ' + money(a.rew * S.I) : ''}</div></div>`).join('')}
+  </section><section class="panel"><h2>Opciones</h2>
+  <button class="btn big b" data-act="pause">Abrir menú de pausa</button>
+  <div class="note">La partida se guarda sola en este navegador. Desde la pausa podés hacer una copia de seguridad.</div></section>`);
+ $('#bk-rate').textContent = money(blue() * 1.02) + ' / ' + money(blue() * 0.98);
+ $('#bk-usd').textContent = 'US$ ' + nf.format(S.usd);
+ $('#bk-val').textContent = money(S.usd * blue() * 0.98);
+ $('#bk-inf').textContent = pct(S.inf);
+ $('#bk-acc').textContent = '+' + nf.format((S.I - 1) * 100) + '%';
+ $('#bk-cl').textContent = nf.format(S.stats.served) + ' / ' + nf.format(S.stats.lost);
+ $('#bk-ex').textContent = nf.format(S.stats.expensive) + ' / ' + nf.format(S.stats.full);
+ $('#bk-ad').textContent = nf.format(S.stats.achilata) + ' / ' + nf.format(S.stats.delivery);
+}
+function updateAfford() { document.querySelectorAll('#view [data-cost]').forEach(b => b.classList.toggle('dis', S.money < +b.dataset.cost)); }
+function render() {
+ if (!S) return;
+ renderHUD(); renderBanner(); renderTabs();
+ const v = $('#view');
+ if (S.phase < 2 && tab === 'cadena') tab = 'cocina';
+ ({cocina:vCocina, precios:vPrecios, mejoras:vMejoras, local:vLocal, cadena:vCadena, banco:vBanco}[tab] || vCocina)(v);
+ updateAfford();
+}
+
+/* ================= INICIO ================= */
+function intro() {
+ modal(`<div class="title">BURGER<br>TYCOON</div><div class="sub">Edición Tucumán<br>De la esquina al imperio</div>${img('mila', 96)}
+ <p>Te quedaste con un localcito en una esquina de San Miguel de Tucumán: una plancha, un mostrador y muchas ganas. Cociná, atendé, decorá, remarcá antes de que la inflación te coma el margen y, si te va bien, armá una cadena en todo el país.</p>
+ <label>Nombre de tu sanguchería</label><input id="nm" maxlength="22" value="La Esquina">
+ <button class="btn big g" data-act="start">Abrir el local</button>`);
+}
+S = load();
+if (!S) { S = newState(); intro(); }
+let last = performance.now(), saveT = 0;
+setInterval(() => {
+ const now = performance.now(), dt = Math.min((now - last) / 1000, 0.5); last = now;
+ if (!S || paused) return;
+ for (let i = 0; i < S.speed; i++) tick(dt);
+ render();
+ saveT += dt; if (saveT > 10) { saveT = 0; save(); }
+}, 100);
+document.addEventListener('visibilitychange', () => {
+ if (!S) return;
+ if (document.hidden) { save(); if (!paused) pauseMenu(); }
+});
+if (document.fonts && document.fonts.load) document.fonts.load('16px "Press Start 2P"').then(() => { G3.dirty = true; }).catch(() => {});
+requestAnimationFrame(loop3);
+render();
+</script>
+</body>
+</html>
